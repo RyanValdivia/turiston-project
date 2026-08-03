@@ -1,0 +1,287 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum CategoriaResiduo {
+  MERMA_PREPARACION
+  PRODUCTO_DETERIORADO
+  SOBREPRODUCCION
+  ALIMENTO_NO_VENDIDO
+  RESTOS_CLIENTE
+  CARTON
+  VIDRIO
+  PLASTICO
+  ACEITE_USADO
+  NO_APROVECHABLE
+}
+
+enum AreaProceso {
+  COCINA
+  ALMACEN
+  SALON
+  BARRA
+  LIMPIEZA
+  OTRO
+}
+
+enum MotivoGeneracion {
+  SOBREPRODUCCION
+  ERROR_PREPARACION
+  PRODUCTO_VENCIDO
+  EXCESO_COMPRA
+  DEVOLUCION_CLIENTE
+  MAL_ALMACENAMIENTO
+  ERROR_PORCION
+  OTRO
+}
+
+enum Turno {
+  MANANA
+  TARDE
+  NOCHE
+}
+
+enum DestinoPrevisto {
+  RELLENO_SANITARIO
+  COMPOSTAJE
+  DONACION
+  VALORIZACION_RECICLADOR
+  REUTILIZACION_INTERNA
+  VENTA_SUBPRODUCTO
+  PENDIENTE_DEFINIR
+}
+
+enum RolColaborador {
+  ADMINISTRADOR
+  JEFE_COCINA
+  COCINERO
+  ALMACEN
+  LIMPIEZA
+  SOSTENIBILIDAD
+  TURNO
+}
+
+enum EstadoPrediccion {
+  PENDIENTE
+  COMPLETADA
+  ERROR
+}
+
+model Restaurante {
+  id                 String   @id @default(cuid())
+  nombre             String
+  ciudad             String   @default("Arequipa")
+  lineaBaseSemanalKg Float?
+  createdAt          DateTime @default(now())
+
+  usuario          Usuario?
+  colaboradores    Colaborador[]
+  productos        Producto[]
+  residuos         Residuo[]
+  entregas         Entrega[]
+  acciones         AccionAplicada[]
+  registrosOperacion RegistroOperacion[]
+  ventas           Venta[]
+  producciones     Produccion[]
+  reportes         Reporte[]
+  predicciones     Prediccion[]
+}
+
+/// Cuenta de acceso (login). 1:1 con Restaurante.
+model Usuario {
+  id                 String      @id @default(cuid())
+  restauranteId      String      @unique
+  restaurante        Restaurante @relation(fields: [restauranteId], references: [id], onDelete: Cascade)
+  nombre             String
+  email              String      @unique
+  passwordHash       String
+  resetToken         String?     @unique
+  resetTokenExpiresAt DateTime?
+  createdAt          DateTime    @default(now())
+}
+
+/// Personal operativo (sin login), usado para atribuir registros: jefe de cocina, almacén, etc.
+model Colaborador {
+  id            String         @id @default(cuid())
+  restauranteId String
+  restaurante   Restaurante    @relation(fields: [restauranteId], references: [id], onDelete: Cascade)
+  nombre        String
+  rol           RolColaborador
+  capacitado    Boolean        @default(false)
+  createdAt     DateTime       @default(now())
+
+  residuos           Residuo[]
+  entregas           Entrega[]
+  registrosOperacion RegistroOperacion[]
+
+  @@index([restauranteId])
+}
+
+model Producto {
+  id            String      @id @default(cuid())
+  restauranteId String
+  restaurante   Restaurante @relation(fields: [restauranteId], references: [id], onDelete: Cascade)
+  nombre        String
+  costoUnitario Float
+  createdAt     DateTime    @default(now())
+
+  residuos Residuo[]
+
+  @@index([restauranteId])
+}
+
+/// Registro diario de operación: agrupa ventas, producción y desperdicio de un turno.
+model RegistroOperacion {
+  id            String       @id @default(cuid())
+  restauranteId String
+  restaurante   Restaurante  @relation(fields: [restauranteId], references: [id], onDelete: Cascade)
+  colaboradorId String?
+  colaborador   Colaborador? @relation(fields: [colaboradorId], references: [id])
+  fecha         DateTime
+  turno         Turno
+  observaciones String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  ventas       Venta[]
+  producciones Produccion[]
+  residuos     Residuo[]
+
+  @@unique([restauranteId, fecha, turno])
+  @@index([restauranteId])
+  @@index([restauranteId, fecha])
+}
+
+model Venta {
+  id                  String            @id @default(cuid())
+  restauranteId       String
+  restaurante         Restaurante       @relation(fields: [restauranteId], references: [id], onDelete: Cascade)
+  registroOperacionId String
+  registroOperacion   RegistroOperacion @relation(fields: [registroOperacionId], references: [id], onDelete: Cascade)
+  concepto            String
+  cantidad            Float
+  montoTotal          Float
+  createdAt           DateTime          @default(now())
+
+  @@index([restauranteId])
+  @@index([registroOperacionId])
+}
+
+model Produccion {
+  id                  String            @id @default(cuid())
+  restauranteId       String
+  restaurante         Restaurante       @relation(fields: [restauranteId], references: [id], onDelete: Cascade)
+  registroOperacionId String
+  registroOperacion   RegistroOperacion @relation(fields: [registroOperacionId], references: [id], onDelete: Cascade)
+  productoAsociado    String
+  cantidadProducida   Float
+  unidad              String            @default("kg")
+  createdAt           DateTime          @default(now())
+
+  @@index([restauranteId])
+  @@index([registroOperacionId])
+}
+
+model Residuo {
+  id            String      @id @default(cuid())
+  restauranteId String
+  restaurante   Restaurante @relation(fields: [restauranteId], references: [id], onDelete: Cascade)
+  colaboradorId String?
+  colaborador   Colaborador? @relation(fields: [colaboradorId], references: [id])
+
+  registroOperacionId String?
+  registroOperacion   RegistroOperacion? @relation(fields: [registroOperacionId], references: [id], onDelete: Cascade)
+
+  categoria        CategoriaResiduo
+  cantidadKg       Float
+  area             AreaProceso
+  areaDetalle      String?
+  productoAsociado String
+  productoId       String?
+  producto         Producto?         @relation(fields: [productoId], references: [id])
+  motivo           MotivoGeneracion
+  fecha            DateTime
+  turno            Turno
+  destinoPrevisto  DestinoPrevisto
+  costoManual      Float?
+  costoTotal       Float?
+  observaciones    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([restauranteId])
+  @@index([restauranteId, fecha])
+  @@index([registroOperacionId])
+}
+
+model Entrega {
+  id            String       @id @default(cuid())
+  restauranteId String
+  restaurante   Restaurante  @relation(fields: [restauranteId], references: [id], onDelete: Cascade)
+  colaboradorId String?
+  colaborador   Colaborador? @relation(fields: [colaboradorId], references: [id])
+
+  categoria     CategoriaResiduo
+  pesoKg        Float
+  fecha         DateTime
+  receptor      String
+  fotografiaUrl String?
+  constanciaUrl String?
+  observaciones String?
+
+  createdAt DateTime @default(now())
+
+  @@index([restauranteId])
+  @@index([restauranteId, fecha])
+}
+
+model AccionAplicada {
+  id                  String      @id @default(cuid())
+  restauranteId       String
+  restaurante         Restaurante @relation(fields: [restauranteId], references: [id], onDelete: Cascade)
+  recomendacionCodigo String
+  descripcion         String
+  fecha               DateTime    @default(now())
+  notas               String?
+
+  @@index([restauranteId])
+}
+
+/// Snapshot persistido de un reporte generado (no se recalcula al exportar).
+model Reporte {
+  id            String      @id @default(cuid())
+  restauranteId String
+  restaurante   Restaurante @relation(fields: [restauranteId], references: [id], onDelete: Cascade)
+  periodoFrom   DateTime
+  periodoTo     DateTime
+  resumenJson   String
+  csv           String
+  createdAt     DateTime    @default(now())
+
+  @@index([restauranteId])
+}
+
+/// Predicción generada por el modelo (arquitectura + endpoints; cálculo real conectable por separado).
+model Prediccion {
+  id               String           @id @default(cuid())
+  restauranteId    String
+  restaurante      Restaurante      @relation(fields: [restauranteId], references: [id], onDelete: Cascade)
+  tipo             String
+  horizonteDias    Int?
+  datosEntradaJson String
+  resultadoJson    String?
+  estado           EstadoPrediccion @default(PENDIENTE)
+  createdAt        DateTime         @default(now())
+  completadaEn     DateTime?
+
+  @@index([restauranteId])
+}
