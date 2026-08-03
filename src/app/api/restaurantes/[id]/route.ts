@@ -10,7 +10,6 @@ const SELECT = {
   id: true,
   nombre: true,
   ciudad: true,
-  email: true,
   lineaBaseSemanalKg: true,
   createdAt: true,
 } as const;

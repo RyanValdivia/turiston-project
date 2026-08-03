@@ -1,8 +1,7 @@
 import { db } from "@/lib/db";
 import { hashPassword } from "@/lib/password";
 import { generarReporte } from "@/lib/reporte";
-import { calcularTendencia } from "@/lib/estadisticas";
-import { ejecutarModeloPredictivo } from "@/lib/prediccion";
+import { predecirVentas } from "@/lib/prediccion";
 import {
   CategoriaResiduo,
   AreaProceso,
@@ -240,6 +239,55 @@ async function main() {
     ],
   });
 
+  // Historial de ventas "limpio" para poder entrenar el modelo predictivo de
+  // verdad (mismo criterio del script original: 10 platos, 01/01/2026-31/07/2026,
+  // venta base mayor en fin de semana, con jitter aleatorio).
+  const platosMenu = [
+    "Lomo Saltado", "Ceviche", "Aji de Gallina", "Causa Rellena",
+    "Arroz con Pollo", "Tallarines Verdes", "Papa a la Huancaina",
+    "Anticuchos", "Rocoto Relleno", "Chupe de Camarones",
+  ];
+  const precioBase: Record<string, number> = {
+    "Lomo Saltado": 28, "Ceviche": 32, "Aji de Gallina": 24, "Causa Rellena": 20,
+    "Arroz con Pollo": 22, "Tallarines Verdes": 25, "Papa a la Huancaina": 15,
+    "Anticuchos": 26, "Rocoto Relleno": 18, "Chupe de Camarones": 34,
+  };
+
+  function randInt(min: number, max: number): number {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  const fechaFinHistorial = new Date(2026, 6, 31);
+  for (
+    let fecha = new Date(2026, 0, 1);
+    fecha <= fechaFinHistorial;
+    fecha.setDate(fecha.getDate() + 1)
+  ) {
+    const esFinde = fecha.getDay() === 0 || fecha.getDay() === 6;
+
+    await db.registroOperacion.create({
+      data: {
+        restauranteId: restaurante.id,
+        fecha: new Date(fecha),
+        turno: Turno.TARDE,
+        observaciones: "Historial de ventas (backfill para entrenar el modelo predictivo)",
+        ventas: {
+          create: platosMenu.map((nombre) => {
+            const base = esFinde ? randInt(40, 90) : randInt(10, 45);
+            const cantidad = Math.max(0, base + randInt(-5, 10));
+            return {
+              restauranteId: restaurante.id,
+              concepto: nombre,
+              cantidad,
+              montoTotal: cantidad * precioBase[nombre],
+            };
+          }),
+        },
+      },
+    });
+  }
+  console.log("Historial de ventas sembrado (01/01/2026-31/07/2026, 10 platos/día).");
+
   // Reporte persistido de ejemplo (pantalla "Reportes").
   const reportePeriodoTo = new Date();
   const reportePeriodoFrom = daysAgo(30);
@@ -254,21 +302,34 @@ async function main() {
     },
   });
 
-  // Predicción de ejemplo (pantalla "Premium Predict") — modelo naive, ver src/lib/prediccion.ts.
-  const tendencia = await calcularTendencia(restaurante.id, reportePeriodoFrom, reportePeriodoTo);
-  const horizonteDias = 7;
-  const resultadoPrediccion = await ejecutarModeloPredictivo({ tendencia, horizonteDias });
-  await db.prediccion.create({
-    data: {
-      restauranteId: restaurante.id,
-      tipo: "desperdicio_semanal",
-      horizonteDias,
-      datosEntradaJson: JSON.stringify({ tendencia, horizonteDias }),
-      resultadoJson: JSON.stringify(resultadoPrediccion),
-      estado: EstadoPrediccion.COMPLETADA,
-      completadaEn: new Date(),
-    },
-  });
+  // Predicción de ejemplo (pantalla "Premium Predict") — modelo real (RandomForest,
+  // ver predictor/), entrenado con el historial de ventas recién sembrado.
+  try {
+    const fechaObjetivoPrediccion = new Date(2026, 7, 1); // día siguiente al historial sembrado
+    const { entreno, predicciones } = await predecirVentas(restaurante.id, fechaObjetivoPrediccion);
+    await db.prediccion.create({
+      data: {
+        restauranteId: restaurante.id,
+        tipo: "ventas_por_plato",
+        datosEntradaJson: JSON.stringify({ fechaObjetivo: "2026-08-01" }),
+        resultadoJson: JSON.stringify({
+          predicciones,
+          metrics: entreno.metrics,
+          entrenadoEn: entreno.entrenadoEn,
+        }),
+        estado: EstadoPrediccion.COMPLETADA,
+        completadaEn: new Date(),
+      },
+    });
+    console.log(
+      `Modelo predictivo entrenado (${entreno.filasUsadas} filas, precisión ~${entreno.metrics.precisionPct}%).`
+    );
+  } catch (err) {
+    console.warn(
+      "No se pudo entrenar/predecir en el seed (revisa que Python + predictor/requirements.txt estén instalados):",
+      err
+    );
+  }
 
   console.log(`Seed completo. Login: ${email} / demo1234 (restauranteId: ${restaurante.id})`);
 }

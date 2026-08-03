@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
-import { handleRouteError } from "@/lib/api-helpers";
+import { handleRouteError, jsonError } from "@/lib/api-helpers";
 import { createPrediccionSchema } from "@/lib/validation/prediccion";
-import { calcularTendencia } from "@/lib/estadisticas";
-import { ejecutarModeloPredictivo } from "@/lib/prediccion";
+import { predecirVentas, DatosInsuficientesError } from "@/lib/prediccion";
 import { EstadoPrediccion } from "@/generated/prisma/enums";
 
 export const dynamic = "force-dynamic";
@@ -41,35 +40,37 @@ export async function POST(
     await requireSession(request, id);
     const body = await request.json().catch(() => ({}));
     const data = createPrediccionSchema.parse(body);
-    const tipo = data.tipo ?? "desperdicio_semanal";
-    const horizonteDias = data.horizonteDias ?? 7;
 
-    const to = new Date();
-    const from = new Date(to.getTime() - 90 * 24 * 60 * 60 * 1000); // últimos ~90 días de historial
-    const tendencia = await calcularTendencia(id, from, to);
-    const datosEntrada = { tendencia, horizonteDias };
+    const fechaObjetivo = data.fecha ?? new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     try {
-      const resultado = await ejecutarModeloPredictivo({ tendencia, horizonteDias });
+      const { entreno, predicciones } = await predecirVentas(id, fechaObjetivo);
+      const datosEntrada = { fechaObjetivo: fechaObjetivo.toISOString().slice(0, 10) };
+      const resultado = { predicciones, metrics: entreno.metrics, entrenadoEn: entreno.entrenadoEn };
+
       const prediccion = await db.prediccion.create({
         data: {
           restauranteId: id,
-          tipo,
-          horizonteDias,
+          tipo: "ventas_por_plato",
           datosEntradaJson: JSON.stringify(datosEntrada),
           resultadoJson: JSON.stringify(resultado),
           estado: EstadoPrediccion.COMPLETADA,
           completadaEn: new Date(),
         },
       });
+
       return NextResponse.json({ ...prediccion, datosEntrada, resultado }, { status: 201 });
-    } catch (modeloError) {
-      console.error("Error ejecutando el modelo predictivo:", modeloError);
+    } catch (error) {
+      if (error instanceof DatosInsuficientesError) {
+        return jsonError(422, error.message, { filasDisponibles: error.count });
+      }
+
+      console.error("Error prediciendo ventas:", error);
+      const datosEntrada = { fechaObjetivo: fechaObjetivo.toISOString().slice(0, 10) };
       const prediccion = await db.prediccion.create({
         data: {
           restauranteId: id,
-          tipo,
-          horizonteDias,
+          tipo: "ventas_por_plato",
           datosEntradaJson: JSON.stringify(datosEntrada),
           estado: EstadoPrediccion.ERROR,
         },

@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // frontend/ is a separate Vite/TanStack Start project with its own eslint.config.js.
+    "frontend/**",
   ]),
 ]);
 

@@ -48,3 +48,12 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# modelos entrenados (artefacto derivado, por restaurante)
+/predictor/models/*.joblib
+/predictor/models/*.meta.json
+!/predictor/models/.gitkeep
+
+# entornos virtuales de python, si el compañero usa uno local
+predictor/.venv/
+predictor/__pycache__/

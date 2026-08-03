@@ -1,7 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { AppShell } from "@/components/AppShell";
+import { requireSession, useSession } from "@/lib/session";
+import { getDashboard, getTendencias } from "@/lib/api";
 
 export const Route = createFileRoute("/dashboard")({
+  ssr: false,
+  beforeLoad: ({ context }) => requireSession(context.queryClient),
   head: () => ({
     meta: [
       { title: "Dashboard — RESTORA Daily Operations" },
@@ -20,7 +26,41 @@ export const Route = createFileRoute("/dashboard")({
   component: DashboardPage,
 });
 
+function fmtDate(iso: string) {
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+function fmtTime(iso: string) {
+  return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+}
+function pct(n: number | null): string {
+  return n == null ? "—" : `${n.toFixed(1)}%`;
+}
+function money(n: number): string {
+  return `S/ ${n.toFixed(2)}`;
+}
+
 function DashboardPage() {
+  const session = useSession();
+  const restauranteId = session.data?.restaurante.id ?? "";
+
+  const dashboard = useQuery({
+    queryKey: ["dashboard", restauranteId],
+    queryFn: () => getDashboard(restauranteId),
+    enabled: !!restauranteId,
+  });
+
+  const tendencias = useQuery({
+    queryKey: ["tendencias", restauranteId, "dashboard"],
+    queryFn: () => getTendencias(restauranteId),
+    enabled: !!restauranteId,
+  });
+
+  const chartData =
+    tendencias.data?.tendencia.map((b) => ({
+      semana: fmtDate(b.periodoInicio),
+      kg: Number(b.totalKg.toFixed(1)),
+    })) ?? [];
+
   return (
     <AppShell active="/dashboard">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-md">
@@ -29,7 +69,7 @@ function DashboardPage() {
             Overview
           </h2>
           <p className="font-body-md text-body-md text-on-surface-variant mt-1">
-            Today's operational metrics for Arequipa Central.
+            Operational metrics for {session.data?.restaurante.nombre ?? "your restaurant"}.
           </p>
         </div>
         <Link
@@ -40,6 +80,10 @@ function DashboardPage() {
           Register today's data
         </Link>
       </div>
+
+      {dashboard.isError && (
+        <p className="text-sm text-red-600">Could not load dashboard data. Try refreshing.</p>
+      )}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-md">
         <div className="bg-surface-container-lowest rounded-xl p-md border border-outline-variant shadow-soft flex flex-col justify-between col-span-2 md:col-span-1">
@@ -53,11 +97,7 @@ function DashboardPage() {
           </div>
           <div>
             <div className="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-primary-container font-bold">
-              S/ 420.50
-            </div>
-            <div className="font-label-sm text-label-sm text-error flex items-center gap-1 mt-1">
-              <span className="material-symbols-outlined text-[14px]">arrow_upward</span>
-              +5.2% vs last week
+              {dashboard.data ? money(dashboard.data.resumen.perdidaEstimada) : "—"}
             </div>
           </div>
         </div>
@@ -73,11 +113,7 @@ function DashboardPage() {
           </div>
           <div>
             <div className="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-on-surface font-bold">
-              45 kg
-            </div>
-            <div className="font-label-sm text-label-sm text-secondary flex items-center gap-1 mt-1">
-              <span className="material-symbols-outlined text-[14px]">arrow_downward</span>
-              -2.1% vs last week
+              {dashboard.data ? `${dashboard.data.resumen.totalKg.toFixed(1)} kg` : "—"}
             </div>
           </div>
         </div>
@@ -85,14 +121,19 @@ function DashboardPage() {
         <div className="bg-surface-container-lowest rounded-xl p-md border border-outline-variant shadow-soft flex flex-col justify-between col-span-1">
           <div className="flex items-center gap-2 mb-sm text-on-surface-variant">
             <span className="material-symbols-outlined">eco</span>
-            <span className="font-label-sm text-label-sm uppercase tracking-wider">Reduction</span>
+            <span className="font-label-sm text-label-sm uppercase tracking-wider">Prevention</span>
           </div>
           <div>
             <div className="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-on-surface font-bold">
-              12%
+              {dashboard.data ? pct(dashboard.data.resumen.prevencionPct) : "—"}
             </div>
             <div className="w-full bg-surface-variant h-1.5 rounded-full mt-2">
-              <div className="bg-secondary h-1.5 rounded-full" style={{ width: "12%" }} />
+              <div
+                className="bg-secondary h-1.5 rounded-full"
+                style={{
+                  width: `${Math.max(0, Math.min(100, dashboard.data?.resumen.prevencionPct ?? 0))}%`,
+                }}
+              />
             </div>
           </div>
         </div>
@@ -104,10 +145,10 @@ function DashboardPage() {
           </div>
           <div>
             <div className="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-on-surface font-bold">
-              18
+              {dashboard.data?.ultimasOperaciones.length ?? "—"}
             </div>
             <div className="font-label-sm text-label-sm text-on-surface-variant mt-1">
-              Logged today
+              Recently logged
             </div>
           </div>
         </div>
@@ -117,45 +158,21 @@ function DashboardPage() {
         <div className="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-soft md:col-span-2 overflow-hidden flex flex-col">
           <div className="p-md border-b border-surface-variant flex justify-between items-center bg-surface-bright">
             <h3 className="font-headline-sm text-headline-sm-mobile md:font-headline-md md:text-headline-md text-on-surface">
-              Weekly Performance
+              Weekly Performance (kg waste)
             </h3>
-            <button className="text-on-surface-variant p-1 rounded-full hover:bg-surface-variant transition-colors">
-              <span className="material-symbols-outlined">more_vert</span>
-            </button>
           </div>
-          <div className="p-md flex-1 min-h-[200px] flex items-end gap-2 relative">
-            <div className="absolute inset-0 p-md pointer-events-none">
-              <div className="border-b border-dashed border-surface-variant w-full h-[25%]" />
-              <div className="border-b border-dashed border-surface-variant w-full h-[25%]" />
-              <div className="border-b border-dashed border-surface-variant w-full h-[25%]" />
-              <div className="border-b border-solid border-surface-variant w-full h-[25%]" />
-            </div>
-            <div className="w-full h-full flex items-end justify-around relative z-10 pt-4">
-              <div className="w-1/12 bg-surface-variant rounded-t-sm h-[40%] hover:bg-primary-container transition-colors group relative cursor-pointer">
-                <div className="opacity-0 group-hover:opacity-100 absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-inverse-on-surface font-label-sm text-label-sm px-2 py-1 rounded shadow-lg transition-opacity whitespace-nowrap">
-                  Mon: 45kg
-                </div>
-              </div>
-              <div className="w-1/12 bg-surface-variant rounded-t-sm h-[60%] hover:bg-primary-container transition-colors cursor-pointer" />
-              <div className="w-1/12 bg-surface-variant rounded-t-sm h-[30%] hover:bg-primary-container transition-colors cursor-pointer" />
-              <div className="w-1/12 bg-surface-variant rounded-t-sm h-[80%] hover:bg-primary-container transition-colors cursor-pointer" />
-              <div className="w-1/12 bg-surface-variant rounded-t-sm h-[50%] hover:bg-primary-container transition-colors cursor-pointer" />
-              <div className="w-1/12 bg-primary-container rounded-t-sm h-[70%] relative cursor-pointer">
-                <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-inverse-surface text-inverse-on-surface font-label-sm text-label-sm px-2 py-1 rounded shadow-lg whitespace-nowrap">
-                  Sat: 62kg
-                </div>
-              </div>
-              <div className="w-1/12 bg-surface-variant rounded-t-sm h-[20%] hover:bg-primary-container transition-colors cursor-pointer" />
-            </div>
-          </div>
-          <div className="flex justify-around px-md pb-md font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider">
-            <span>M</span>
-            <span>T</span>
-            <span>W</span>
-            <span>T</span>
-            <span>F</span>
-            <span className="text-primary font-bold">S</span>
-            <span>S</span>
+          <div className="p-md flex-1 min-h-[220px]">
+            {chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart data={chartData}>
+                  <XAxis dataKey="semana" tick={{ fontSize: 12 }} />
+                  <Tooltip />
+                  <Bar dataKey="kg" fill="#8b6f47" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-sm text-on-surface-variant">No trend data for this period yet.</p>
+            )}
           </div>
         </div>
 
@@ -172,50 +189,28 @@ function DashboardPage() {
             </Link>
           </div>
           <div className="p-md flex-1 space-y-4 overflow-y-auto">
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-primary-container shrink-0 mt-1">
-                <span className="material-symbols-outlined text-[16px]">add_circle</span>
-              </div>
-              <div>
-                <div className="font-label-md text-label-md font-bold text-on-surface">
-                  Prep Waste Logged
+            {dashboard.data?.ultimasOperaciones.length === 0 && (
+              <p className="text-sm text-on-surface-variant">No operations logged yet.</p>
+            )}
+            {dashboard.data?.ultimasOperaciones.map((op) => (
+              <div className="flex items-start gap-3" key={op.id}>
+                <div className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-primary-container shrink-0 mt-1">
+                  <span className="material-symbols-outlined text-[16px]">add_circle</span>
                 </div>
-                <div className="font-body-md text-body-md text-on-surface-variant line-clamp-1">
-                  12kg - Vegetable trimmings
-                </div>
-                <div className="font-label-sm text-label-sm text-outline mt-0.5">10:45 AM</div>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center text-secondary shrink-0 mt-1">
-                <span className="material-symbols-outlined text-[16px]">inventory_2</span>
-              </div>
-              <div>
-                <div className="font-label-md text-label-md font-bold text-on-surface">
-                  Inventory Adjusted
-                </div>
-                <div className="font-body-md text-body-md text-on-surface-variant line-clamp-1">
-                  Spoilage recorded
-                </div>
-                <div className="font-label-sm text-label-sm text-outline mt-0.5">09:12 AM</div>
-              </div>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-full bg-error-container flex items-center justify-center text-on-error-container shrink-0 mt-1">
-                <span className="material-symbols-outlined text-[16px]">warning</span>
-              </div>
-              <div>
-                <div className="font-label-md text-label-md font-bold text-on-surface">
-                  High Loss Alert
-                </div>
-                <div className="font-body-md text-body-md text-on-surface-variant line-clamp-1">
-                  Meat section exceeded 5% loss
-                </div>
-                <div className="font-label-sm text-label-sm text-outline mt-0.5">
-                  Yesterday, 4:20 PM
+                <div>
+                  <div className="font-label-md text-label-md font-bold text-on-surface">
+                    {op.turno.charAt(0) + op.turno.slice(1).toLowerCase()} operation
+                  </div>
+                  <div className="font-body-md text-body-md text-on-surface-variant line-clamp-1">
+                    {op.totalDesperdicioKg.toFixed(1)} kg waste · S/ {op.totalVentas.toFixed(0)}{" "}
+                    sales
+                  </div>
+                  <div className="font-label-sm text-label-sm text-outline mt-0.5">
+                    {fmtDate(op.fecha)}, {fmtTime(op.fecha)}
+                  </div>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>

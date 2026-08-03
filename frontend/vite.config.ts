@@ -12,4 +12,16 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    server: {
+      // Backend (Next.js) runs on :3000. Proxying keeps the browser same-origin
+      // so the httpOnly session cookie from /api/auth/login works without CORS.
+      proxy: {
+        "/api": {
+          target: "http://localhost:3000",
+          changeOrigin: true,
+        },
+      },
+    },
+  },
 });
