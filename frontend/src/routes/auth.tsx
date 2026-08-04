@@ -54,6 +54,13 @@ function AuthPage() {
     onSuccess: goToApp,
   });
 
+  // Acceso rápido para demos: usa el usuario sembrado por prisma/seed.ts, sin
+  // que el presentador tenga que escribir credenciales en vivo.
+  const demoLoginMutation = useMutation({
+    mutationFn: () => login({ email: "demo@circularaqp.pe", password: "demo1234" }),
+    onSuccess: goToApp,
+  });
+
   const registerMutation = useMutation({
     mutationFn: async () => {
       await register(registerForm);
@@ -207,6 +214,20 @@ function AuthPage() {
                 <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
               </button>
             </form>
+            <div className="mt-md">
+              {demoLoginMutation.isError && (
+                <p className="text-sm text-red-600 mb-xs">{errorMessage(demoLoginMutation.error)}</p>
+              )}
+              <button
+                className="w-full h-[44px] bg-surface-container hover:bg-surface-variant text-on-surface font-label-md text-label-md rounded-lg border border-outline-variant transition-all flex justify-center items-center gap-sm disabled:opacity-60"
+                disabled={demoLoginMutation.isPending}
+                onClick={() => demoLoginMutation.mutate()}
+                type="button"
+              >
+                <span className="material-symbols-outlined text-[20px]">bolt</span>
+                <span>{demoLoginMutation.isPending ? "Ingresando…" : "Entrar como demo"}</span>
+              </button>
+            </div>
             <div className="mt-lg text-center pt-md border-t border-outline-variant/30">
               <p className="font-body-md text-body-md text-on-surface-variant">
                 ¿No tienes una cuenta?
