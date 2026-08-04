@@ -1,0 +1,12 @@
+node_modules
+.output
+dist
+dist-ssr
+.tanstack
+.nitro
+.vinxi
+.auth
+test-results
+playwright-report
+e2e
+.git

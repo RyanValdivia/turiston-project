@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+frontend
+predictor/models
+dev.db
+dev.db-journal
+*.tsbuildinfo
+.env
+.env.example
+test-results
+playwright-report
+.claude

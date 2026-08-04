@@ -1,0 +1,64 @@
+services:
+  backend:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+    container_name: turiston-backend
+    environment:
+      DATABASE_URL: file:/app/data/prod.db
+      AUTH_SECRET: ${AUTH_SECRET}
+      NODE_ENV: production
+      ASISTENTE_HABILITADO: ${ASISTENTE_HABILITADO:-true}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODEL: ${GROQ_MODEL:-llama-3.3-70b-versatile}
+      GROQ_TRANSCRIBE_MODEL: ${GROQ_TRANSCRIBE_MODEL:-whisper-large-v3-turbo}
+    volumes:
+      - turiston_data:/app/data
+      - turiston_models:/app/predictor/models
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${TRAEFIK_NETWORK:-traefik_proxy}
+      - traefik.http.routers.turiston-api.rule=Host(`${TRAEFIK_HOST}`) && PathPrefix(`/api`)
+      - traefik.http.routers.turiston-api.entrypoints=websecure
+      - traefik.http.routers.turiston-api.tls=true
+      - traefik.http.routers.turiston-api.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-cloudflare}
+      - traefik.http.routers.turiston-api.priority=10
+      - traefik.http.services.turiston-api.loadbalancer.server.port=3000
+    restart: unless-stopped
+    networks:
+      - turiston-internal
+      - traefik_proxy
+
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile
+    container_name: turiston-frontend
+    depends_on:
+      - backend
+    labels:
+      - traefik.enable=true
+      - traefik.docker.network=${TRAEFIK_NETWORK:-traefik_proxy}
+      - traefik.http.routers.turiston-web.rule=Host(`${TRAEFIK_HOST}`)
+      - traefik.http.routers.turiston-web.entrypoints=websecure
+      - traefik.http.routers.turiston-web.tls=true
+      - traefik.http.routers.turiston-web.tls.certresolver=${TRAEFIK_CERT_RESOLVER:-cloudflare}
+      - traefik.http.routers.turiston-web.priority=1
+      - traefik.http.services.turiston-web.loadbalancer.server.port=3000
+    restart: unless-stopped
+    networks:
+      - turiston-internal
+      - traefik_proxy
+
+volumes:
+  turiston_data:
+  turiston_models:
+
+networks:
+  turiston-internal:
+    driver: bridge
+  traefik_proxy:
+    external: true
+    name: ${TRAEFIK_NETWORK:-traefik_proxy}
