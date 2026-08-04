@@ -113,12 +113,16 @@ function ProfilePage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-lg mb-lg">
             <div className="flex-1 w-full space-y-sm">
               <div>
-                <label className="block font-label-sm text-label-sm text-on-surface-variant mb-1">
+                <label
+                  className="block font-label-sm text-label-sm text-on-surface-variant mb-1"
+                  htmlFor="profile-nombre"
+                >
                   Nombre del restaurante
                 </label>
                 <input
                   className="w-full h-[48px] px-sm rounded-lg border border-outline focus:border-primary focus:ring-1 focus:ring-primary bg-surface-container-lowest font-body-md text-body-md text-on-surface disabled:opacity-70"
                   disabled={!editing}
+                  id="profile-nombre"
                   onChange={(e) => setNombre(e.target.value)}
                   type="text"
                   value={nombre}
@@ -128,7 +132,10 @@ function ProfilePage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
             <div>
-              <label className="block font-label-sm text-label-sm text-on-surface-variant mb-1">
+              <label
+                className="block font-label-sm text-label-sm text-on-surface-variant mb-1"
+                htmlFor="profile-ciudad"
+              >
                 Ciudad
               </label>
               <div className="relative">
@@ -138,6 +145,7 @@ function ProfilePage() {
                 <input
                   className="w-full h-[48px] pl-10 pr-sm rounded-lg border border-outline focus:border-primary focus:ring-1 focus:ring-primary bg-surface-container-lowest font-body-md text-body-md text-on-surface disabled:opacity-70"
                   disabled={!editing}
+                  id="profile-ciudad"
                   onChange={(e) => setCiudad(e.target.value)}
                   type="text"
                   value={ciudad}
@@ -145,7 +153,10 @@ function ProfilePage() {
               </div>
             </div>
             <div>
-              <label className="block font-label-sm text-label-sm text-on-surface-variant mb-1">
+              <label
+                className="block font-label-sm text-label-sm text-on-surface-variant mb-1"
+                htmlFor="profile-email"
+              >
                 Correo de contacto
               </label>
               <div className="relative">
@@ -154,6 +165,7 @@ function ProfilePage() {
                 </span>
                 <input
                   className="w-full h-[48px] pl-10 pr-sm rounded-lg border border-outline bg-surface-container-lowest font-body-md text-body-md text-on-surface opacity-70"
+                  id="profile-email"
                   readOnly
                   type="email"
                   value={session.data?.email ?? ""}
@@ -161,7 +173,10 @@ function ProfilePage() {
               </div>
             </div>
             <div>
-              <label className="block font-label-sm text-label-sm text-on-surface-variant mb-1">
+              <label
+                className="block font-label-sm text-label-sm text-on-surface-variant mb-1"
+                htmlFor="profile-linea-base"
+              >
                 Línea base semanal (kg)
               </label>
               <div className="relative">
@@ -171,6 +186,7 @@ function ProfilePage() {
                 <input
                   className="w-full h-[48px] pl-10 pr-sm rounded-lg border border-outline focus:border-primary focus:ring-1 focus:ring-primary bg-surface-container-lowest font-body-md text-body-md text-on-surface disabled:opacity-70"
                   disabled={!editing}
+                  id="profile-linea-base"
                   inputMode="decimal"
                   onChange={(e) => setLineaBase(e.target.value)}
                   placeholder="Se usa para el indicador de Prevención"
