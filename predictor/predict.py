@@ -39,7 +39,7 @@ def main() -> None:
 
     id_a_nombre = {v: k for k, v in plato_map.items()}
     resultado = [
-        {"plato": id_a_nombre[plato_id], "prediccion": round(float(pred), 2)}
+        {"plato": id_a_nombre[plato_id], "prediccion": round(float(max(pred, 0)), 2)}
         for plato_id, pred in zip(filas["plato_id"], predicciones)
     ]
 
