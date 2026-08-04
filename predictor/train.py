@@ -5,9 +5,15 @@ Uso: python train.py <ruta_modelo.joblib>
 Entrada (stdin, JSON): {"registros": [{"fecha": "2026-01-01", "nombrePlato": "Ceviche", "cantidad": 42}, ...]}
 Salida (stdout, JSON): {"metrics": {...}, "entrenadoEn": "...", "filasUsadas": N}
 
-Grilla de hiperparametros reducida a proposito (vs. el notebook original) para
-responder en segundos y poder correr sincronicamente dentro de un request del
-backend.
+Modelo: XGBoost (antes RandomForest). Grilla de hiperparametros reducida a
+proposito (vs. el notebook original) para responder en segundos y poder
+correr sincronicamente dentro de un request del backend.
+
+Split cronologico (no aleatorio): al tratarse de una serie de tiempo, el
+modelo solo puede "ver" el pasado para predecir el futuro, asi que los
+ultimos dias del historial se separan como test en vez de mezclarse al azar.
+Lo mismo aplica al cross-validation durante la busqueda de hiperparametros
+(TimeSeriesSplit en vez de un cv comun).
 """
 
 from __future__ import annotations
@@ -19,9 +25,10 @@ from datetime import datetime, timezone
 
 import joblib
 import numpy as np
-from sklearn.ensemble import RandomForestRegressor
+import pandas as pd
 from sklearn.metrics import r2_score
-from sklearn.model_selection import GridSearchCV, train_test_split
+from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
+from xgboost import XGBRegressor
 
 from common import FEATURE_COLS, build_plato_map, engineer_training_features, parse_registros_to_df
 
@@ -29,9 +36,12 @@ sys.stdin.reconfigure(encoding="utf-8")
 sys.stdout.reconfigure(encoding="utf-8")
 
 PARAM_GRID = {
-    "n_estimators": [150, 300],
-    "max_depth": [8, None],
+    "n_estimators": [200, 400],
+    "max_depth": [3, 6],
+    "learning_rate": [0.05, 0.1],
 }
+
+DIAS_TEST = 14  # ultimos N dias del historial usados como test
 
 
 def safe_mape(y_true, y_pred) -> float:
@@ -56,28 +66,42 @@ def main() -> None:
     X = df_feat[FEATURE_COLS]
     y = df_feat["cantidad_vendida"]
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    # Split cronologico: los ultimos DIAS_TEST dias del historial son el test.
+    fecha_corte = df_feat["fecha"].max() - pd.Timedelta(days=DIAS_TEST - 1)
+    train_mask = df_feat["fecha"] < fecha_corte
+    test_mask = df_feat["fecha"] >= fecha_corte
+
+    X_train, y_train = X[train_mask], y[train_mask]
+    X_test, y_test = X[test_mask], y[test_mask]
+
+    n_splits = min(3, max(2, len(X_train) // 50))
+    tscv = TimeSeriesSplit(n_splits=n_splits)
 
     grid_search = GridSearchCV(
-        RandomForestRegressor(random_state=42),
+        XGBRegressor(random_state=42, objective="reg:squarederror"),
         PARAM_GRID,
-        cv=3,
+        cv=tscv,
         scoring="neg_mean_absolute_error",
         n_jobs=-1,
     )
     grid_search.fit(X_train, y_train)
-    modelo = grid_search.best_estimator_
+    modelo_busqueda = grid_search.best_estimator_
 
-    predicciones = modelo.predict(X_test)
+    predicciones = np.maximum(modelo_busqueda.predict(X_test), 0)
     mae = float(np.mean(np.abs(y_test - predicciones)))
     mape = safe_mape(y_test, predicciones)
     r2 = float(r2_score(y_test, predicciones))
     precision_pct = 100 - (mape * 100)
 
+    # Reentrenamos con TODOS los datos (incluido el periodo de test) para la
+    # prediccion real a futuro, ya que no necesitamos guardar nada para validar.
+    modelo_final = XGBRegressor(**grid_search.best_params_, random_state=42, objective="reg:squarederror")
+    modelo_final.fit(X, y)
+
     entrenado_en = datetime.now(timezone.utc).isoformat()
 
     bundle = {
-        "model": modelo,
+        "model": modelo_final,
         "plato_map": plato_map,
         "tablas": tablas,
         "feature_cols": FEATURE_COLS,
@@ -86,7 +110,9 @@ def main() -> None:
         "best_params": grid_search.best_params_,
     }
 
-    os.makedirs(os.path.dirname(model_path), exist_ok=True)
+    model_dir = os.path.dirname(model_path)
+    if model_dir:
+        os.makedirs(model_dir, exist_ok=True)
     joblib.dump(bundle, model_path)
 
     print(json.dumps({
