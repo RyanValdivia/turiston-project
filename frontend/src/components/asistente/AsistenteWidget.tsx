@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAsistente } from "@/hooks/useAsistente";
-import { FLUJOS_DISPONIBLES, type FlujoId } from "@/lib/asistente";
+import { useGrabacionVoz } from "@/hooks/useGrabacionVoz";
+import { FLUJOS_DISPONIBLES, transcribirVoz, type FlujoId } from "@/lib/asistente";
+import { ApiError } from "@/lib/api";
 import { BorradorPanel } from "@/components/asistente/BorradorPanel";
 import { ResumenConfirmacion } from "@/components/asistente/ResumenConfirmacion";
 
@@ -28,12 +30,35 @@ export function AsistenteWidget() {
   const [abierto, setAbierto] = useState(false);
   const [texto, setTexto] = useState("");
   const [editando, setEditando] = useState(false);
+  const [errorVoz, setErrorVoz] = useState<string | null>(null);
   const navigate = useNavigate();
   const a = useAsistente();
   const finRef = useRef<HTMLDivElement>(null);
 
+  // Registro por voz: el audio grabado (ya filtrado de silencio) se transcribe y
+  // el texto cae en el campo de entrada para revisar antes de enviarlo.
+  const onAudioListo = useCallback(
+    async (audio: Blob, mimeType: string) => {
+      setErrorVoz(null);
+      try {
+        const { texto } = await transcribirVoz(a.restauranteId, audio, mimeType);
+        setTexto((prev) => (prev ? `${prev} ${texto}` : texto));
+      } catch (err) {
+        setErrorVoz(
+          err instanceof ApiError ? err.message : "No se pudo transcribir el audio. Inténtalo de nuevo.",
+        );
+      } finally {
+        voz.setProcesando(false);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [a.restauranteId],
+  );
+  const voz = useGrabacionVoz(onAudioListo);
+
   const listo = a.ultimaRespuesta?.listoParaGuardar ?? false;
   const mostrarConfirmacion = listo && !editando;
+  const grabandoOcupado = voz.estado !== "inactivo";
 
   useEffect(() => {
     finRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -192,26 +217,74 @@ export function AsistenteWidget() {
 
           {/* Entrada */}
           {a.flujo && (!mostrarConfirmacion || editando) && (
-            <form
-              onSubmit={onEnviar}
-              className="shrink-0 flex items-center gap-2 border-t border-outline-variant p-sm bg-surface"
-            >
-              <input
-                value={texto}
-                onChange={(e) => setTexto(e.target.value)}
-                placeholder="Escribe tu respuesta…"
-                className="flex-1 h-11 px-3 rounded-full bg-surface-container border border-outline-variant focus:border-primary outline-none text-body-md text-on-surface"
-                disabled={a.estado === "escribiendo" || a.estado === "guardando"}
-              />
-              <button
-                type="submit"
-                aria-label="Enviar"
-                disabled={!texto.trim() || a.estado === "escribiendo"}
-                className="w-11 h-11 rounded-full bg-primary text-on-primary flex items-center justify-center active:scale-90 transition-transform disabled:opacity-50"
-              >
-                <span className="material-symbols-outlined">send</span>
-              </button>
-            </form>
+            <div className="shrink-0 border-t border-outline-variant bg-surface">
+              {(errorVoz || voz.error) && (
+                <p className="px-md pt-sm text-label-sm text-error">{errorVoz || voz.error}</p>
+              )}
+              {voz.estado === "grabando" && (
+                <div className="flex items-center gap-2 px-md pt-sm text-label-sm text-primary">
+                  <span className="material-symbols-outlined animate-pulse" style={{ fontSize: 18 }}>
+                    graphic_eq
+                  </span>
+                  <span>Escuchando… habla y haz una pausa para terminar.</span>
+                  <span className="ml-auto h-1.5 w-16 overflow-hidden rounded-full bg-surface-variant">
+                    <span
+                      className="block h-full bg-primary transition-[width] duration-75"
+                      style={{ width: `${Math.round(voz.nivel * 100)}%` }}
+                    />
+                  </span>
+                </div>
+              )}
+              <form onSubmit={onEnviar} className="flex items-center gap-2 p-sm">
+                <input
+                  value={texto}
+                  onChange={(e) => setTexto(e.target.value)}
+                  placeholder={
+                    voz.estado === "procesando" ? "Transcribiendo…" : "Escribe o dicta tu respuesta…"
+                  }
+                  className="flex-1 h-11 px-3 rounded-full bg-surface-container border border-outline-variant focus:border-primary outline-none text-body-md text-on-surface"
+                  disabled={a.estado === "escribiendo" || a.estado === "guardando" || grabandoOcupado}
+                />
+                {voz.soportado && (
+                  <button
+                    type="button"
+                    aria-label={voz.estado === "grabando" ? "Detener grabación" : "Dictar por voz"}
+                    onClick={() => {
+                      setErrorVoz(null);
+                      if (voz.estado === "grabando") voz.detener();
+                      else if (voz.estado === "inactivo") void voz.iniciar();
+                    }}
+                    disabled={
+                      voz.estado === "procesando" ||
+                      a.estado === "escribiendo" ||
+                      a.estado === "guardando"
+                    }
+                    className={
+                      "w-11 h-11 rounded-full flex items-center justify-center active:scale-90 transition-transform disabled:opacity-50 " +
+                      (voz.estado === "grabando"
+                        ? "bg-error text-on-error animate-pulse"
+                        : "bg-surface-variant text-on-surface-variant hover:bg-surface-container-high")
+                    }
+                  >
+                    <span className="material-symbols-outlined">
+                      {voz.estado === "grabando"
+                        ? "stop"
+                        : voz.estado === "procesando"
+                          ? "progress_activity"
+                          : "mic"}
+                    </span>
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  aria-label="Enviar"
+                  disabled={!texto.trim() || a.estado === "escribiendo" || grabandoOcupado}
+                  className="w-11 h-11 rounded-full bg-primary text-on-primary flex items-center justify-center active:scale-90 transition-transform disabled:opacity-50"
+                >
+                  <span className="material-symbols-outlined">send</span>
+                </button>
+              </form>
+            </div>
           )}
         </div>
       )}

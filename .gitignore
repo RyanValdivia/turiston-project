@@ -37,6 +37,11 @@ yarn-error.log*
 # vercel
 .vercel
 
+# archivos locales de datos y documentación auxiliar
+/data/
+/exports/
+/Ficha_Tecnica_CircularAQP.pdf
+
 # prisma
 /dev.db
 /dev.db-journal

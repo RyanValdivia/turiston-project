@@ -9,10 +9,12 @@ export class ApiError extends Error {
 }
 
 async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  // Con FormData no fijamos Content-Type: el navegador añade el boundary multipart.
+  const esFormData = options.body instanceof FormData;
   const response = await fetch(`/api${path}`, {
     credentials: "include",
     headers: {
-      "Content-Type": "application/json",
+      ...(esFormData ? {} : { "Content-Type": "application/json" }),
       ...options.headers,
     },
     ...options,
@@ -40,6 +42,9 @@ function get<T>(path: string): Promise<T> {
 }
 export function post<T>(path: string, body?: unknown): Promise<T> {
   return apiFetch<T>(path, { method: "POST", ...(body ? { body: JSON.stringify(body) } : {}) });
+}
+export function postForm<T>(path: string, form: FormData): Promise<T> {
+  return apiFetch<T>(path, { method: "POST", body: form });
 }
 function patch<T>(path: string, body?: unknown): Promise<T> {
   return apiFetch<T>(path, { method: "PATCH", ...(body ? { body: JSON.stringify(body) } : {}) });

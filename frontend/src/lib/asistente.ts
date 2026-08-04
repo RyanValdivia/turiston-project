@@ -1,5 +1,6 @@
 import {
   post,
+  postForm,
   createOperacion,
   createEntrega,
   createProducto,
@@ -86,6 +87,27 @@ export function enviarMensajeAsistente(
   payload: { flujo: FlujoId; mensajes: MensajeChat[]; borrador?: Record<string, unknown> },
 ) {
   return post<RespuestaAsistente>(`/restaurantes/${restauranteId}/asistente`, payload);
+}
+
+export interface RespuestaTranscripcion {
+  texto: string;
+  proveedor: string;
+}
+
+/**
+ * Envía el audio grabado (ya filtrado de silencio en el cliente) al backend, que
+ * lo transcribe con Groq Whisper (o Gemini de respaldo) usando las keys del `.env`.
+ * Devuelve el texto para que el usuario lo revise antes de enviarlo al asistente.
+ */
+export function transcribirVoz(
+  restauranteId: string,
+  audio: Blob,
+  mimeType: string,
+): Promise<RespuestaTranscripcion> {
+  const form = new FormData();
+  const ext = mimeType.includes("ogg") ? "ogg" : mimeType.includes("wav") ? "wav" : "webm";
+  form.append("audio", audio, `registro.${ext}`);
+  return postForm<RespuestaTranscripcion>(`/restaurantes/${restauranteId}/asistente/voz`, form);
 }
 
 /**
