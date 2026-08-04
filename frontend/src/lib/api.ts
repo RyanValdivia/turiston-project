@@ -38,7 +38,7 @@ async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> 
 function get<T>(path: string): Promise<T> {
   return apiFetch<T>(path, { method: "GET" });
 }
-function post<T>(path: string, body?: unknown): Promise<T> {
+export function post<T>(path: string, body?: unknown): Promise<T> {
   return apiFetch<T>(path, { method: "POST", ...(body ? { body: JSON.stringify(body) } : {}) });
 }
 function patch<T>(path: string, body?: unknown): Promise<T> {
@@ -361,6 +361,20 @@ export function createColaborador(
   return post<Colaborador>(`/restaurantes/${restauranteId}/colaboradores`, data);
 }
 
+export function updateColaborador(
+  restauranteId: string,
+  colaboradorId: string,
+  data: Partial<{ nombre: string; rol: RolColaborador; capacitado: boolean }>,
+) {
+  return patch<Colaborador>(
+    `/restaurantes/${restauranteId}/colaboradores/${colaboradorId}`,
+    data,
+  );
+}
+export function deleteColaborador(restauranteId: string, colaboradorId: string) {
+  return del<{ ok: true }>(`/restaurantes/${restauranteId}/colaboradores/${colaboradorId}`);
+}
+
 export function listProductos(restauranteId: string) {
   return get<Producto[]>(`/restaurantes/${restauranteId}/productos`);
 }
@@ -369,6 +383,103 @@ export function createProducto(
   data: { nombre: string; costoUnitario: number },
 ) {
   return post<Producto>(`/restaurantes/${restauranteId}/productos`, data);
+}
+export function updateProducto(
+  restauranteId: string,
+  productoId: string,
+  data: Partial<{ nombre: string; costoUnitario: number }>,
+) {
+  return patch<Producto>(`/restaurantes/${restauranteId}/productos/${productoId}`, data);
+}
+export function deleteProducto(restauranteId: string, productoId: string) {
+  return del<{ ok: true }>(`/restaurantes/${restauranteId}/productos/${productoId}`);
+}
+
+// ---------------------------------------------------------------------------
+// Entregas (trazabilidad / valorización)
+// ---------------------------------------------------------------------------
+
+export interface EntregaItem {
+  categoria: CategoriaResiduo;
+  pesoKg: number;
+  fecha: string;
+  receptor: string;
+  fotografiaUrl?: string;
+  constanciaUrl?: string;
+  observaciones?: string;
+  colaboradorId?: string;
+}
+export interface Entrega extends Omit<EntregaItem, "colaboradorId"> {
+  id: string;
+  restauranteId: string;
+  colaboradorId: string | null;
+  createdAt: string;
+}
+
+export function listEntregas(
+  restauranteId: string,
+  params?: { from?: string; to?: string; categoria?: CategoriaResiduo },
+) {
+  return get<Entrega[]>(`/restaurantes/${restauranteId}/entregas${qs(params)}`);
+}
+export function createEntrega(restauranteId: string, data: EntregaItem) {
+  return post<Entrega>(`/restaurantes/${restauranteId}/entregas`, data);
+}
+export function updateEntrega(
+  restauranteId: string,
+  entregaId: string,
+  data: Partial<EntregaItem>,
+) {
+  return patch<Entrega>(`/restaurantes/${restauranteId}/entregas/${entregaId}`, data);
+}
+export function deleteEntrega(restauranteId: string, entregaId: string) {
+  return del<{ ok: true }>(`/restaurantes/${restauranteId}/entregas/${entregaId}`);
+}
+
+// ---------------------------------------------------------------------------
+// Residuos (registro individual, además del anidado en operaciones)
+// ---------------------------------------------------------------------------
+
+export function listResiduos(
+  restauranteId: string,
+  params?: {
+    from?: string;
+    to?: string;
+    categoria?: CategoriaResiduo;
+    area?: AreaProceso;
+    turno?: Turno;
+  },
+) {
+  return get<Residuo[]>(`/restaurantes/${restauranteId}/residuos${qs(params)}`);
+}
+export function createResiduo(restauranteId: string, data: ResiduoItem & { colaboradorId?: string }) {
+  return post<Residuo>(`/restaurantes/${restauranteId}/residuos`, data);
+}
+export function deleteResiduo(restauranteId: string, residuoId: string) {
+  return del<{ ok: true }>(`/restaurantes/${restauranteId}/residuos/${residuoId}`);
+}
+
+// ---------------------------------------------------------------------------
+// Acciones aplicadas (recomendaciones puestas en práctica)
+// ---------------------------------------------------------------------------
+
+export interface AccionAplicada {
+  id: string;
+  restauranteId: string;
+  recomendacionCodigo: string;
+  descripcion: string;
+  fecha: string;
+  notas: string | null;
+}
+
+export function listAcciones(restauranteId: string) {
+  return get<AccionAplicada[]>(`/restaurantes/${restauranteId}/acciones`);
+}
+export function createAccion(
+  restauranteId: string,
+  data: { recomendacionCodigo: string; descripcion: string; notas?: string },
+) {
+  return post<AccionAplicada>(`/restaurantes/${restauranteId}/acciones`, data);
 }
 
 // ---------------------------------------------------------------------------

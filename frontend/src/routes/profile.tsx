@@ -10,13 +10,8 @@ export const Route = createFileRoute("/profile")({
   beforeLoad: ({ context }) => requireSession(context.queryClient),
   head: () => ({
     meta: [
-      { title: "Profile & Settings - RESTORA" },
-      { name: "description", content: "Manage your restaurant details, preferences, and account." },
-      { property: "og:title", content: "Profile & Settings - RESTORA" },
-      {
-        property: "og:description",
-        content: "Manage your restaurant details, preferences, and account.",
-      },
+      { title: "Perfil y ajustes - restora" },
+      { name: "description", content: "Gestiona los datos de tu restaurante, preferencias y cuenta." },
     ],
   }),
   component: ProfilePage,
@@ -67,10 +62,10 @@ function ProfilePage() {
     <AppShell active="/profile">
       <div className="mb-lg">
         <h2 className="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-on-surface mb-xs">
-          Profile &amp; Settings
+          Perfil y ajustes
         </h2>
         <p className="font-body-md text-body-md text-on-surface-variant">
-          Manage your restaurant details, preferences, and account.
+          Gestiona los datos de tu restaurante, preferencias y cuenta.
         </p>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-12 gap-md">
@@ -78,7 +73,7 @@ function ProfilePage() {
         <div className="md:col-span-8 bg-surface-container-lowest rounded-xl p-lg border border-outline-variant sillar-shadow">
           <div className="flex items-center justify-between mb-lg">
             <h3 className="font-headline-sm text-headline-sm text-on-surface">
-              Restaurant Profile
+              Perfil del restaurante
             </h3>
             {editing ? (
               <div className="flex gap-sm">
@@ -87,7 +82,7 @@ function ProfilePage() {
                   onClick={() => setEditing(false)}
                   type="button"
                 >
-                  Cancel
+                  Cancelar
                 </button>
                 <button
                   className="text-primary hover:bg-surface-container px-3 py-1 rounded-full transition-colors font-label-md text-label-md disabled:opacity-60"
@@ -95,7 +90,7 @@ function ProfilePage() {
                   onClick={() => saveMutation.mutate()}
                   type="button"
                 >
-                  {saveMutation.isPending ? "Saving…" : "Save"}
+                  {saveMutation.isPending ? "Guardando…" : "Guardar"}
                 </button>
               </div>
             ) : (
@@ -104,7 +99,7 @@ function ProfilePage() {
                 onClick={() => setEditing(true)}
                 type="button"
               >
-                Edit
+                Editar
               </button>
             )}
           </div>
@@ -112,14 +107,14 @@ function ProfilePage() {
             <p className="text-sm text-red-600 mb-md">
               {saveMutation.error instanceof ApiError
                 ? saveMutation.error.message
-                : "Could not save changes."}
+                : "No se pudieron guardar los cambios."}
             </p>
           )}
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-lg mb-lg">
             <div className="flex-1 w-full space-y-sm">
               <div>
                 <label className="block font-label-sm text-label-sm text-on-surface-variant mb-1">
-                  Restaurant Name
+                  Nombre del restaurante
                 </label>
                 <input
                   className="w-full h-[48px] px-sm rounded-lg border border-outline focus:border-primary focus:ring-1 focus:ring-primary bg-surface-container-lowest font-body-md text-body-md text-on-surface disabled:opacity-70"
@@ -134,7 +129,7 @@ function ProfilePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
             <div>
               <label className="block font-label-sm text-label-sm text-on-surface-variant mb-1">
-                City
+                Ciudad
               </label>
               <div className="relative">
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">
@@ -151,7 +146,7 @@ function ProfilePage() {
             </div>
             <div>
               <label className="block font-label-sm text-label-sm text-on-surface-variant mb-1">
-                Contact Email
+                Correo de contacto
               </label>
               <div className="relative">
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">
@@ -167,7 +162,7 @@ function ProfilePage() {
             </div>
             <div>
               <label className="block font-label-sm text-label-sm text-on-surface-variant mb-1">
-                Weekly Baseline (kg)
+                Línea base semanal (kg)
               </label>
               <div className="relative">
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant text-[20px]">
@@ -178,7 +173,7 @@ function ProfilePage() {
                   disabled={!editing}
                   inputMode="decimal"
                   onChange={(e) => setLineaBase(e.target.value)}
-                  placeholder="Used for the Prevention indicator"
+                  placeholder="Se usa para el indicador de Prevención"
                   type="text"
                   value={lineaBase}
                 />
@@ -193,17 +188,18 @@ function ProfilePage() {
           <div>
             <div className="flex items-center justify-between mb-sm relative z-10">
               <span className="font-label-md text-label-md uppercase tracking-wider bg-white/20 px-2 py-1 rounded-full">
-                Active Plan
+                Plan activo
               </span>
               <span className="material-symbols-outlined" data-weight="fill">
                 verified
               </span>
             </div>
             <h3 className="font-display-lg-mobile text-display-lg-mobile font-bold mb-xs relative z-10">
-              Premium AI
+              IA Premium
             </h3>
             <p className="font-body-md text-body-md opacity-90 relative z-10">
-              Full access to advanced analytics, automated registry, and priority support.
+              Acceso completo a análisis avanzado, registro automatizado con IA y soporte
+              prioritario.
             </p>
           </div>
         </div>
@@ -211,7 +207,9 @@ function ProfilePage() {
         {/* Preferences */}
         <div className="md:col-span-12 bg-surface-container-lowest rounded-xl p-0 border border-outline-variant overflow-hidden sillar-shadow">
           <div className="p-lg border-b border-outline-variant bg-surface-container-low">
-            <h3 className="font-headline-sm text-headline-sm text-on-surface">App Preferences</h3>
+            <h3 className="font-headline-sm text-headline-sm text-on-surface">
+              Preferencias de la app
+            </h3>
           </div>
           <ul className="divide-y divide-outline-variant">
             <li className="flex items-center justify-between p-md hover:bg-surface-container transition-colors">
@@ -221,10 +219,10 @@ function ProfilePage() {
                 </div>
                 <div>
                   <h4 className="font-body-lg text-body-lg text-on-surface font-medium">
-                    Push Notifications
+                    Notificaciones push
                   </h4>
                   <p className="font-label-sm text-label-sm text-on-surface-variant">
-                    Alerts for new registrations and reports.
+                    Alertas de nuevos registros y reportes.
                   </p>
                 </div>
               </div>
@@ -250,7 +248,7 @@ function ProfilePage() {
             type="button"
           >
             <span className="material-symbols-outlined mr-2 text-[20px]">logout</span>
-            {logoutMutation.isPending ? "Signing out…" : "Sign Out"}
+            {logoutMutation.isPending ? "Cerrando sesión…" : "Cerrar sesión"}
           </button>
         </div>
       </div>

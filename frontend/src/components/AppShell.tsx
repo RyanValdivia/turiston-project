@@ -1,21 +1,22 @@
 import { Link } from "@tanstack/react-router";
 import type { ReactNode } from "react";
-
-const AVATAR =
-  "https://lh3.googleusercontent.com/aida-public/AB6AXuAg2XVkx6Hb-jErnyT_Np7Shx3_WBedVg9gOSiH6Wt81TAhJlKjryyx5rVIcPr0T9MonkPoi7sUt8UrjzB1HvOyc-bZTRXwEEpB84qyghIR1dGthP0LqCk4vgBtJnlpb8cI3uPsN37FdBjFAM6KLxT0ttpv1rxQlpsiYKa5DMNzrCPZ_D1FBfIUVfrHFwCBnEXHy-99vMIrzMFbZfryQOKlbTs6HJq6sT-H2EUwdebt7a-hJUJlTM2dWQ";
+import { useSession } from "@/lib/session";
+import { AsistenteWidget } from "@/components/asistente/AsistenteWidget";
 
 const NAV = [
-  { to: "/dashboard", label: "Dashboard", icon: "dashboard" },
-  { to: "/register", label: "Register", icon: "edit_note" },
-  { to: "/history", label: "History", icon: "history" },
-  { to: "/analytics", label: "Analytics", icon: "leaderboard" },
-  { to: "/reports", label: "Reports", icon: "description" },
-  { to: "/predict", label: "AI Predict", icon: "auto_awesome" },
-  { to: "/profile", label: "Profile", icon: "person" },
+  { to: "/dashboard", label: "Panel", icon: "dashboard" },
+  { to: "/register", label: "Registrar", icon: "edit_note" },
+  { to: "/history", label: "Historial", icon: "history" },
+  { to: "/entregas", label: "Entregas", icon: "recycling" },
+  { to: "/analytics", label: "Análisis", icon: "leaderboard" },
+  { to: "/catalogo", label: "Catálogo", icon: "inventory_2" },
+  { to: "/reports", label: "Reportes", icon: "description" },
+  { to: "/predict", label: "Predicción IA", icon: "auto_awesome" },
+  { to: "/profile", label: "Perfil", icon: "person" },
 ] as const;
 
 const MOBILE_NAV = NAV.filter((item) =>
-  ["/dashboard", "/register", "/history", "/analytics", "/profile"].includes(item.to),
+  ["/dashboard", "/register", "/entregas", "/analytics", "/profile"].includes(item.to),
 );
 
 export function AppShell({
@@ -25,6 +26,8 @@ export function AppShell({
   children: ReactNode;
   active: string;
 }) {
+  const session = useSession();
+  const nombreRestaurante = session.data?.restaurante.nombre ?? "restora";
   return (
     <div className="bg-surface text-on-surface antialiased min-h-screen flex flex-col md:flex-row pb-safe md:pb-0">
       {/* Navigation Drawer (Desktop) */}
@@ -36,19 +39,17 @@ export function AppShell({
         </div>
         <div className="px-md mb-xl">
           <div className="flex items-center gap-sm">
-            <div className="w-10 h-10 rounded-full bg-surface-variant overflow-hidden shrink-0">
-              <img
-                className="w-full h-full object-cover"
-                alt="Restaurant manager portrait"
-                src={AVATAR}
-              />
+            <div className="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center shrink-0">
+              <span className="material-symbols-outlined" data-weight="fill">
+                storefront
+              </span>
             </div>
             <div>
-              <div className="font-label-md text-label-md font-bold text-on-surface">
-                Arequipa Central
+              <div className="font-label-md text-label-md font-bold text-on-surface line-clamp-1">
+                {nombreRestaurante}
               </div>
               <div className="font-label-sm text-label-sm text-on-surface-variant">
-                Manager View
+                Vista de administrador
               </div>
             </div>
           </div>
@@ -119,6 +120,9 @@ export function AppShell({
           </Link>
         ))}
       </nav>
+
+      {/* Asistente conversacional (global) */}
+      <AsistenteWidget />
     </div>
   );
 }

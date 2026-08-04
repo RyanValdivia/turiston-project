@@ -1,9 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { AppShell } from "@/components/AppShell";
 import { requireSession, useSession } from "@/lib/session";
-import { getIndicadores, getRecomendaciones, getTendencias } from "@/lib/api";
+import {
+  getIndicadores,
+  getRecomendaciones,
+  getTendencias,
+  listAcciones,
+  createAccion,
+  ApiError,
+  type Recomendacion,
+} from "@/lib/api";
+import { ETIQUETA_CATEGORIA, ETIQUETA_MOTIVO } from "@/lib/etiquetas";
 import {
   LineChart,
   Line,
@@ -25,10 +34,8 @@ export const Route = createFileRoute("/analytics")({
   beforeLoad: ({ context }) => requireSession(context.queryClient),
   head: () => ({
     meta: [
-      { title: "Restora - Analytics" },
-      { name: "description", content: "Track your waste reduction goals." },
-      { property: "og:title", content: "Restora - Analytics" },
-      { property: "og:description", content: "Track your waste reduction goals." },
+      { title: "restora - Análisis" },
+      { name: "description", content: "Sigue tus metas de reducción de desperdicio." },
     ],
   }),
   component: AnalyticsPage,
@@ -39,8 +46,14 @@ const PALETTE = ["#7a1f3d", "#f6be39", "#dac0c4", "#a3d2a7", "#9f3c59", "#887275
 function humanize(label: string): string {
   return label.charAt(0) + label.slice(1).toLowerCase().replace(/_/g, " ");
 }
+function etiquetaCategoria(label: string): string {
+  return (ETIQUETA_CATEGORIA as Record<string, string>)[label] ?? humanize(label);
+}
+function etiquetaMotivo(label: string): string {
+  return (ETIQUETA_MOTIVO as Record<string, string>)[label] ?? humanize(label);
+}
 function fmtWeek(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return new Date(iso).toLocaleDateString("es-PE", { month: "short", day: "numeric" });
 }
 function monthRange(offsetMonths: number) {
   const now = new Date();
@@ -52,9 +65,10 @@ function monthRange(offsetMonths: number) {
 
 function AnalyticsPage() {
   const session = useSession();
+  const queryClient = useQueryClient();
   const restauranteId = session.data?.restaurante.id ?? "";
-  const [period, setPeriod] = useState<"This Month" | "Last Month">("This Month");
-  const range = monthRange(period === "This Month" ? 0 : -1);
+  const [period, setPeriod] = useState<"Este mes" | "Mes anterior">("Este mes");
+  const range = monthRange(period === "Este mes" ? 0 : -1);
 
   const indicadores = useQuery({
     queryKey: ["indicadores", restauranteId, range.from, range.to],
@@ -71,6 +85,28 @@ function AnalyticsPage() {
     queryFn: () => getRecomendaciones(restauranteId, range),
     enabled: !!restauranteId,
   });
+  const acciones = useQuery({
+    queryKey: ["acciones", restauranteId],
+    queryFn: () => listAcciones(restauranteId),
+    enabled: !!restauranteId,
+  });
+
+  const aplicar = useMutation({
+    mutationFn: (rec: Recomendacion) =>
+      createAccion(restauranteId, {
+        recomendacionCodigo: rec.codigo,
+        descripcion: rec.titulo,
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["acciones"] });
+      queryClient.invalidateQueries({ queryKey: ["indicadores"] });
+    },
+  });
+
+  const codigosAplicados = useMemo(
+    () => new Set((acciones.data ?? []).map((a) => a.recomendacionCodigo)),
+    [acciones.data],
+  );
 
   const wasteData = useMemo(
     () =>
@@ -83,7 +119,7 @@ function AnalyticsPage() {
   const lossData = useMemo(
     () =>
       Object.entries(indicadores.data?.generacion.porCategoria ?? {}).map(([categoria, kg]) => ({
-        category: humanize(categoria),
+        category: etiquetaCategoria(categoria),
         kg: Number(kg.toFixed(1)),
       })),
     [indicadores.data],
@@ -91,28 +127,28 @@ function AnalyticsPage() {
   const causesData = useMemo(
     () =>
       Object.entries(indicadores.data?.analisis.porMotivo ?? {}).map(([motivo, kg], i) => ({
-        name: humanize(motivo),
+        name: etiquetaMotivo(motivo),
         value: Number(kg.toFixed(1)),
         color: PALETTE[i % PALETTE.length]!,
       })),
     [indicadores.data],
   );
-  const topRecomendacion = recomendaciones.data?.recomendaciones[0];
+  const listaRecs = recomendaciones.data?.recomendaciones ?? [];
 
   return (
     <AppShell active="/analytics">
       <div className="mb-lg flex justify-between items-end">
         <div>
           <h2 className="font-headline-md text-headline-md text-on-surface mb-xs">
-            Performance Analytics
+            Análisis de desempeño
           </h2>
           <p className="font-body-md text-body-md text-on-surface-variant">
-            Track your waste reduction goals.
+            Sigue tus metas de reducción de desperdicio.
           </p>
         </div>
         <button
           className="bg-surface-container-lowest border border-outline-variant rounded-lg px-4 py-2 font-label-md text-label-md text-on-surface-variant flex items-center gap-2 hover:bg-surface-variant transition-colors"
-          onClick={() => setPeriod(period === "This Month" ? "Last Month" : "This Month")}
+          onClick={() => setPeriod(period === "Este mes" ? "Mes anterior" : "Este mes")}
         >
           {period} <span className="material-symbols-outlined text-[18px]">expand_more</span>
         </button>
@@ -122,7 +158,7 @@ function AnalyticsPage() {
         <section className="col-span-1 md:col-span-8 bg-surface-container-lowest rounded-xl p-md border border-surface-dim shadow-[0_4px_12px_rgba(31,27,23,0.05)]">
           <div className="flex justify-between items-center mb-md">
             <h3 className="font-headline-sm text-headline-sm text-on-surface">
-              Waste Evolution (kg)
+              Evolución del desperdicio (kg)
             </h3>
             {indicadores.data?.prevencionPct != null && (
               <span className="bg-secondary-container text-on-secondary-container px-2 py-1 rounded-full font-label-sm text-label-sm flex items-center gap-1">
@@ -142,11 +178,7 @@ function AnalyticsPage() {
                     axisLine={false}
                     tickLine={false}
                   />
-                  <YAxis
-                    tick={{ fill: "#887275", fontSize: 12 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
+                  <YAxis tick={{ fill: "#887275", fontSize: 12 }} axisLine={false} tickLine={false} />
                   <Tooltip />
                   <Line
                     type="monotone"
@@ -158,7 +190,7 @@ function AnalyticsPage() {
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-sm text-on-surface-variant">No trend data for this period.</p>
+              <p className="text-sm text-on-surface-variant">No hay datos de tendencia en este periodo.</p>
             )}
           </div>
         </section>
@@ -166,7 +198,7 @@ function AnalyticsPage() {
         <section className="col-span-1 md:col-span-4 flex flex-col gap-md">
           <div className="bg-surface-container-lowest rounded-xl p-md border border-surface-dim shadow-[0_4px_12px_rgba(31,27,23,0.05)] flex-1 flex flex-col justify-center">
             <h4 className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">
-              Total Economic Loss
+              Pérdida económica total
             </h4>
             <div className="flex items-baseline gap-2">
               <span className="font-display-lg text-display-lg text-primary-container">
@@ -179,24 +211,27 @@ function AnalyticsPage() {
               </span>
             </div>
           </div>
-          <div className="bg-tertiary-fixed rounded-xl p-md shadow-[0_4px_12px_rgba(31,27,23,0.05)] flex-1 flex flex-col justify-center relative overflow-hidden">
-            <div className="absolute right-[-20px] top-[-20px] opacity-20">
-              <span className="material-symbols-outlined text-[100px]">tips_and_updates</span>
-            </div>
-            <h4 className="font-label-sm text-label-sm text-on-tertiary-fixed-variant uppercase tracking-wider mb-2 z-10">
-              {topRecomendacion ? topRecomendacion.titulo : "Improvement Opportunity"}
+          <div className="bg-surface-container-lowest rounded-xl p-md border border-surface-dim shadow-[0_4px_12px_rgba(31,27,23,0.05)] flex-1 flex flex-col justify-center">
+            <h4 className="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider mb-2">
+              Valorización
             </h4>
-            <p className="font-body-md text-body-md text-on-tertiary-fixed-variant z-10">
-              {topRecomendacion
-                ? topRecomendacion.descripcion
-                : "No critical patterns detected for this period — keep monitoring."}
+            <span className="font-display-lg text-display-lg text-secondary">
+              {indicadores.data?.valorizacionPct != null
+                ? `${indicadores.data.valorizacionPct.toFixed(0)}%`
+                : "—"}
+            </span>
+            <p className="text-body-sm text-on-surface-variant">
+              Trazabilidad:{" "}
+              {indicadores.data?.trazabilidadPct != null
+                ? `${indicadores.data.trazabilidadPct.toFixed(0)}%`
+                : "—"}
             </p>
           </div>
         </section>
 
         <section className="col-span-1 md:col-span-6 bg-surface-container-lowest rounded-xl p-md border border-surface-dim shadow-[0_4px_12px_rgba(31,27,23,0.05)]">
           <h3 className="font-headline-sm text-headline-sm text-on-surface mb-md">
-            Waste by Category (kg)
+            Desperdicio por categoría (kg)
           </h3>
           <div className="h-[200px] w-full relative">
             {lossData.length > 0 ? (
@@ -213,24 +248,20 @@ function AnalyticsPage() {
                     textAnchor="end"
                     height={50}
                   />
-                  <YAxis
-                    tick={{ fill: "#887275", fontSize: 12 }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
+                  <YAxis tick={{ fill: "#887275", fontSize: 12 }} axisLine={false} tickLine={false} />
                   <Tooltip />
                   <Bar dataKey="kg" fill="#9f3c59" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-sm text-on-surface-variant">No data for this period.</p>
+              <p className="text-sm text-on-surface-variant">No hay datos en este periodo.</p>
             )}
           </div>
         </section>
 
         <section className="col-span-1 md:col-span-6 bg-surface-container-lowest rounded-xl p-md border border-surface-dim shadow-[0_4px_12px_rgba(31,27,23,0.05)]">
           <h3 className="font-headline-sm text-headline-sm text-on-surface mb-md">
-            Main Waste Causes
+            Principales causas
           </h3>
           <div className="h-[200px] w-full relative flex justify-center">
             {causesData.length > 0 ? (
@@ -258,9 +289,75 @@ function AnalyticsPage() {
                 </PieChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-sm text-on-surface-variant">No data for this period.</p>
+              <p className="text-sm text-on-surface-variant">No hay datos en este periodo.</p>
             )}
           </div>
+        </section>
+
+        {/* Recomendaciones accionables */}
+        <section className="col-span-1 md:col-span-12 bg-surface-container-lowest rounded-xl p-md border border-surface-dim shadow-[0_4px_12px_rgba(31,27,23,0.05)]">
+          <div className="flex items-center gap-sm mb-md">
+            <span className="material-symbols-outlined text-tertiary-fixed-dim">tips_and_updates</span>
+            <h3 className="font-headline-sm text-headline-sm text-on-surface">
+              Recomendaciones para este periodo
+            </h3>
+          </div>
+          {listaRecs.length === 0 && (
+            <p className="text-sm text-on-surface-variant">Cargando recomendaciones…</p>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-md">
+            {listaRecs.map((rec) => {
+              const aplicado = codigosAplicados.has(rec.codigo);
+              const esSinAlertas = rec.codigo === "R10_SIN_ALERTAS";
+              return (
+                <div
+                  key={rec.codigo}
+                  className="rounded-xl border border-outline-variant/50 bg-surface p-md flex flex-col"
+                >
+                  <div className="flex items-start justify-between gap-2 mb-xs">
+                    <h4 className="font-label-md text-label-md font-bold text-on-surface">
+                      {rec.titulo}
+                    </h4>
+                    <span className="shrink-0 text-label-sm font-label-sm px-2 py-0.5 rounded-full bg-primary-container/40 text-on-primary-container">
+                      P{rec.prioridad}
+                    </span>
+                  </div>
+                  <p className="text-body-sm text-on-surface-variant flex-1">{rec.descripcion}</p>
+                  {!esSinAlertas && (
+                    <div className="mt-sm">
+                      {aplicado ? (
+                        <span className="inline-flex items-center gap-1 text-label-sm text-secondary">
+                          <span className="material-symbols-outlined" style={{ fontSize: 16 }} data-weight="fill">
+                            check_circle
+                          </span>
+                          Marcada como aplicada
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => aplicar.mutate(rec)}
+                          disabled={aplicar.isPending}
+                          className="inline-flex items-center gap-1 h-9 px-3 rounded-lg border border-primary text-primary font-label-sm text-label-sm hover:bg-primary-container/20 transition-colors disabled:opacity-60"
+                        >
+                          <span className="material-symbols-outlined" style={{ fontSize: 16 }}>
+                            playlist_add_check
+                          </span>
+                          Marcar como aplicada
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          {aplicar.isError && (
+            <p className="text-sm text-error mt-sm">
+              {aplicar.error instanceof ApiError
+                ? aplicar.error.message
+                : "No se pudo registrar la acción."}
+            </p>
+          )}
         </section>
       </div>
     </AppShell>

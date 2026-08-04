@@ -11,17 +11,13 @@ export const Route = createFileRoute("/predict")({
   beforeLoad: ({ context }) => requireSession(context.queryClient),
   head: () => ({
     meta: [
-      { title: "AI Predict — RESTORA Cortex Forecasts" },
+      { title: "Predicción IA — restora Cortex" },
       {
         name: "description",
         content:
-          "AI-driven forecasts for demand, resource allocation and waste reduction based on historical restaurant data.",
+          "Pronósticos de demanda por plato basados en el historial de ventas del restaurante (modelo RandomForest).",
       },
-      { property: "og:title", content: "AI Predict — RESTORA Cortex Forecasts" },
-      {
-        property: "og:description",
-        content: "Predictive intelligence for demand, prep targets and expected waste.",
-      },
+      { property: "og:title", content: "Predicción IA — restora Cortex" },
     ],
   }),
   component: PredictPage,
@@ -70,14 +66,15 @@ function PredictPage() {
           <div className="flex items-center gap-2 mb-2">
             <span className="material-symbols-outlined text-tertiary-fixed-dim">auto_awesome</span>
             <span className="font-label-md text-label-md tracking-wider uppercase text-on-surface-variant">
-              Restora Cortex
+              restora Cortex
             </span>
           </div>
           <h2 className="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-on-surface">
-            Predictive <span className="ai-gradient-text">Intelligence</span>
+            Inteligencia <span className="ai-gradient-text">predictiva</span>
           </h2>
           <p className="font-body-lg text-body-lg text-on-surface-variant mt-2 max-w-2xl">
-            Demand forecast by dish, trained on your own sales history (RandomForest model).
+            Pronóstico de demanda por plato, entrenado con tu propio historial de ventas (modelo
+            RandomForest).
           </p>
         </div>
         <div className="flex gap-2 items-center">
@@ -93,7 +90,7 @@ function PredictPage() {
             onClick={() => mutation.mutate()}
           >
             <span className="material-symbols-outlined text-sm">refresh</span>
-            {mutation.isPending ? "Predicting…" : "Predict"}
+            {mutation.isPending ? "Prediciendo…" : "Predecir"}
           </button>
         </div>
       </div>
@@ -102,11 +99,11 @@ function PredictPage() {
         <div className="w-full bg-error-container text-on-error-container rounded-xl p-6">
           {mutation.error instanceof ApiError
             ? mutation.error.message
-            : "Not enough sales history yet."}
+            : "Aún no hay suficiente historial de ventas."}
         </div>
       )}
       {mutation.isError && !insufficientData && (
-        <p className="text-sm text-red-600">Could not run the prediction. Try again.</p>
+        <p className="text-sm text-red-600">No se pudo ejecutar la predicción. Inténtalo de nuevo.</p>
       )}
 
       {/* AI Insight */}
@@ -119,21 +116,21 @@ function PredictPage() {
             </div>
             <div className="flex-1">
               <h3 className="font-headline-md text-headline-md text-tertiary-fixed mb-2">
-                Cortex Recommendation
+                Recomendación de Cortex
               </h3>
               <p className="font-body-md text-body-md text-inverse-on-surface/90 leading-relaxed">
-                Highest expected demand:{" "}
+                Mayor demanda esperada:{" "}
                 <strong className="text-inverse-on-surface">{top.plato}</strong> (~
-                {top.unidades.toFixed(0)} units). Model precision ~
-                {active.metrics.precisionPct.toFixed(0)}% on this restaurant's history — prep
-                accordingly and log any real waste in Today's Shift.
+                {top.unidades.toFixed(0)} unidades). Precisión del modelo ~
+                {active.metrics.precisionPct.toFixed(0)}% sobre el historial de este restaurante:
+                prepara en consecuencia y registra el desperdicio real en el registro del turno.
               </p>
             </div>
             <Link
               className="shrink-0 h-10 px-6 rounded-full bg-tertiary-fixed text-on-tertiary-fixed font-label-md text-label-md hover:bg-tertiary-fixed-dim transition-colors flex items-center"
               to="/register"
             >
-              Log Adjustment
+              Registrar ajuste
             </Link>
           </div>
         </div>
@@ -144,9 +141,11 @@ function PredictPage() {
         <div className="col-span-1 md:col-span-2 bg-surface-container-lowest rounded-xl p-6 shadow-soft border border-outline-variant/30 flex flex-col h-[400px]">
           <div className="flex justify-between items-center mb-6">
             <div>
-              <h3 className="font-headline-sm text-headline-sm text-on-surface">Demand Forecast</h3>
+              <h3 className="font-headline-sm text-headline-sm text-on-surface">
+                Pronóstico de demanda
+              </h3>
               <p className="font-label-md text-label-md text-on-surface-variant mt-1">
-                Predicted units per dish for {fecha}
+                Unidades previstas por plato para {fecha}
               </p>
             </div>
             <span className="material-symbols-outlined text-primary">monitoring</span>
@@ -170,7 +169,7 @@ function PredictPage() {
               </ResponsiveContainer>
             ) : (
               <p className="text-sm text-on-surface-variant">
-                Run a prediction to see the demand forecast by dish.
+                Ejecuta una predicción para ver el pronóstico de demanda por plato.
               </p>
             )}
           </div>
@@ -183,20 +182,22 @@ function PredictPage() {
                 <span className="material-symbols-outlined">verified</span>
               </div>
             </div>
-            <h3 className="font-headline-sm text-headline-sm text-on-surface">Model Confidence</h3>
+            <h3 className="font-headline-sm text-headline-sm text-on-surface">
+              Confianza del modelo
+            </h3>
             <div className="mt-4">
               <span className="font-display-lg text-display-lg text-on-surface">
                 {active ? active.metrics.precisionPct.toFixed(0) : "—"}
               </span>{" "}
-              <span className="font-body-md text-body-md text-on-surface-variant">% precision</span>
+              <span className="font-body-md text-body-md text-on-surface-variant">% precisión</span>
             </div>
           </div>
           {active && (
             <div className="mt-6 space-y-3 font-label-md text-label-md">
               <div className="flex justify-between items-center">
-                <span className="text-on-surface-variant">MAE (avg. error)</span>
+                <span className="text-on-surface-variant">MAE (error prom.)</span>
                 <span className="text-on-surface font-semibold">
-                  {active.metrics.mae.toFixed(1)} units
+                  {active.metrics.mae.toFixed(1)} unidades
                 </span>
               </div>
               <div className="flex justify-between items-center">
@@ -206,9 +207,9 @@ function PredictPage() {
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-on-surface-variant">Trained</span>
+                <span className="text-on-surface-variant">Entrenado</span>
                 <span className="text-on-surface font-semibold">
-                  {new Date(active.entrenadoEn).toLocaleDateString()}
+                  {new Date(active.entrenadoEn).toLocaleDateString("es-PE")}
                 </span>
               </div>
             </div>
@@ -218,10 +219,10 @@ function PredictPage() {
         <div className="col-span-1 md:col-span-3">
           <div className="mb-2">
             <h3 className="font-headline-sm text-headline-sm text-on-surface">
-              Production Targets
+              Metas de producción
             </h3>
             <p className="font-label-md text-label-md text-on-surface-variant mt-1">
-              Suggested prep levels based on predicted demand
+              Niveles de preparación sugeridos según la demanda prevista
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-md">
@@ -236,14 +237,14 @@ function PredictPage() {
                 <div className="flex-1">
                   <h4 className="font-headline-sm text-body-lg text-on-surface">{t.plato}</h4>
                   <span className="font-label-md text-label-md font-bold text-primary">
-                    {t.unidades.toFixed(0)} units suggested
+                    {t.unidades.toFixed(0)} unidades sugeridas
                   </span>
                 </div>
               </div>
             ))}
             {chartData.length === 0 && (
               <p className="text-sm text-on-surface-variant">
-                No forecast yet — run a prediction above.
+                Aún no hay pronóstico — ejecuta una predicción arriba.
               </p>
             )}
           </div>

@@ -10,10 +10,8 @@ export const Route = createFileRoute("/reports")({
   beforeLoad: ({ context }) => requireSession(context.queryClient),
   head: () => ({
     meta: [
-      { title: "Restora - Reports" },
-      { name: "description", content: "Generate and export insights for your restaurant." },
-      { property: "og:title", content: "Restora - Reports" },
-      { property: "og:description", content: "Generate and export insights for your restaurant." },
+      { title: "restora - Reportes" },
+      { name: "description", content: "Genera y exporta reportes de tu restaurante." },
     ],
   }),
   component: ReportsPage,
@@ -25,7 +23,7 @@ function monthOptions() {
   for (let i = 0; i < 6; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
     opts.push({
-      label: d.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+      label: d.toLocaleDateString("es-PE", { month: "long", year: "numeric" }),
       value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
     });
   }
@@ -38,7 +36,7 @@ function monthToRange(value: string) {
   return { from: from.toISOString().slice(0, 10), to: to.toISOString().slice(0, 10) };
 }
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", {
+  return new Date(iso).toLocaleDateString("es-PE", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -70,11 +68,10 @@ function ReportsPage() {
       <header className="mb-lg md:mb-xl flex flex-col md:flex-row md:items-end justify-between gap-md">
         <div>
           <h2 className="font-display-lg-mobile md:font-display-lg text-display-lg-mobile md:text-display-lg text-on-surface mb-xs">
-            Business Reports
+            Reportes
           </h2>
           <p className="font-body-lg text-body-lg text-on-surface-variant">
-            Generate and export insights for {session.data?.restaurante.nombre ?? "your restaurant"}
-            .
+            Genera y exporta reportes de {session.data?.restaurante.nombre ?? "tu restaurante"}.
           </p>
         </div>
       </header>
@@ -86,15 +83,15 @@ function ReportsPage() {
               <div className="flex items-center gap-sm text-primary mb-xs">
                 <span className="material-symbols-outlined">calendar_month</span>
                 <span className="font-label-md text-label-md uppercase tracking-wider">
-                  Monthly Report
+                  Reporte mensual
                 </span>
               </div>
               <h3 className="font-headline-md text-headline-md text-on-surface">
-                Generate a new report
+                Generar un nuevo reporte
               </h3>
               <p className="font-body-md text-body-md text-on-surface-variant mt-sm max-w-md">
-                Waste totals, economic loss, segregation and valorization indicators for the
-                selected month.
+                Totales de desperdicio, pérdida económica e indicadores de segregación y valorización
+                del mes seleccionado.
               </p>
             </div>
           </div>

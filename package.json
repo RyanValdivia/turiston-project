@@ -28,5 +28,13 @@
     "eslint-config-next": "16.2.12",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "allowScripts": {
+    "@prisma/engines@7.9.1": true,
+    "better-sqlite3@12.11.1": true,
+    "esbuild@0.28.1": true,
+    "prisma@7.9.1": true,
+    "sharp@0.34.5": true,
+    "unrs-resolver@1.12.2": true
   }
 }

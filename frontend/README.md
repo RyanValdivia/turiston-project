@@ -1,36 +1,46 @@
-# WonderScreen Builder
+# restora — Frontend
 
-Build this app using the HTML files referenced below. You can hotlink the images referenced in the HTML. The attached images are screenshots of the desired screens. Here are public links to the html of the screens which you should read and use to build the app:
+Cliente web de **restora**, construido con [Vite](https://vitejs.dev/), [TanStack Start](https://tanstack.com/start), [React 19](https://react.dev/) y [Tailwind CSS 4](https://tailwindcss.com/).
 
-1. https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sXzAwMDY1ODJhNDU5NDUwZmEwODlhZjcyMmNhMjcyZmZlEgsSBxCU2-vXogUYAZIBJAoKcHJvamVjdF9pZBIWQhQxODE2NDA2NzM0MDI4MjUzMTc5Mw&filename=&opi=89354086
-2. https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sXzAwMDY1ODJhNDY3MDlhNDAwODlhZjUxMTY0Mjc4MWIwEgsSBxCU2-vXogUYAZIBJAoKcHJvamVjdF9pZBIWQhQxODE2NDA2NzM0MDI4MjUzMTc5Mw&filename=&opi=89354086
-3. https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sXzAwMDY1ODJhNDY4YjA2ZmYwNTc2MDE2NDJiM2M5YTc5EgsSBxCU2-vXogUYAZIBJAoKcHJvamVjdF9pZBIWQhQxODE2NDA2NzM0MDI4MjUzMTc5Mw&filename=&opi=89354086
-4. https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sXzAwMDY1ODJhNDU4OGE4OTQwOTI1ZDRlZGE3M2M0NzNjEgsSBxCU2-vXogUYAZIBJAoKcHJvamVjdF9pZBIWQhQxODE2NDA2NzM0MDI4MjUzMTc5Mw&filename=&opi=89354086
-5. https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sXzAwMDY1ODJhNDc1ZjgzMjcwMWVlNjgzYjUwMWI5NzhjEgsSBxCU2-vXogUYAZIBJAoKcHJvamVjdF9pZBIWQhQxODE2NDA2NzM0MDI4MjUzMTc5Mw&filename=&opi=89354086
-6. https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sXzAwMDY1ODJhNDY0OGQ0ZDIwMDMwMWZmYWIwMmIxMThkEgsSBxCU2-vXogUYAZIBJAoKcHJvamVjdF9pZBIWQhQxODE2NDA2NzM0MDI4MjUzMTc5Mw&filename=&opi=89354086
-7. https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sXzAwMDY1ODJhNDZlYjdhZTAwODlhZjU0NDhlMmQ2NDJhEgsSBxCU2-vXogUYAZIBJAoKcHJvamVjdF9pZBIWQhQxODE2NDA2NzM0MDI4MjUzMTc5Mw&filename=&opi=89354086
-8. https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sXzAwMDY1ODJhNDZkOTllN2UwNDMxMWZmY2JmMTU5Mjg5EgsSBxCU2-vXogUYAZIBJAoKcHJvamVjdF9pZBIWQhQxODE2NDA2NzM0MDI4MjUzMTc5Mw&filename=&opi=89354086
-9. https://contribution.usercontent.google.com/download?c=CgthaWRhX2NvZGVmeBJ8Eh1hcHBfY29tcGFuaW9uX2dlbmVyYXRlZF9maWxlcxpbCiVodG1sXzAwMDY1ODJhNDY5ZGY0MzMwODlhZjU0NDhlMmQ2NDJhEgsSBxCU2-vXogUYAZIBJAoKcHJvamVjdF9pZBIWQhQxODE2NDA2NzM0MDI4MjUzMTc5Mw&filename=&opi=89354086
+## Conexión con el backend
 
-This project was built with [Lovable](https://lovable.dev).
+El frontend corre en `:8080` y usa un **proxy** en `vite.config.ts` para redirigir todas las llamadas a `/api/*` al backend Next.js en `:3000`. Esto mantiene las cookies httpOnly del JWT funcionando sin CORS.
 
-**Live app**: https://bright-brushed-beauty.lovable.app
+```
+Frontend (:8080)  ── /api/* ──►  Backend Next.js (:3000)
+```
 
-## Build with Lovable
+## Desarrollo
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/66df666b-ce7c-40eb-8bb9-eb68279c6166).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
+```bash
+# Desde la raíz del proyecto
+cd frontend
+npm install
 npm run dev
 ```
+
+> ⚠️ El backend debe estar corriendo en `:3000` para que las llamadas a la API funcionen.
+
+## Estructura
+
+```
+src/
+├── routes/          # Páginas (TanStack file-based routing)
+├── components/
+│   ├── AppShell.tsx # Layout con navegación lateral + bottom nav
+│   ├── asistente/   # Widget de chat IA (flotante, global)
+│   └── ui/          # Componentes shadcn/ui (base instalada)
+├── hooks/           # useAsistente, use-mobile
+├── lib/
+│   ├── api.ts       # Cliente HTTP tipado para todos los endpoints
+│   ├── asistente.ts # Tipos y flujos del asistente conversacional
+│   ├── etiquetas.ts # Mapeo de enums del backend a etiquetas en español
+│   └── session.ts   # Gestión de sesión vía TanStack Query
+└── styles.css       # Tokens del design system (Material Design 3)
+```
+
+## Notas
+
+- La UI está **completamente en español**, alineada con el usuario final (administradores de restaurantes en Arequipa).
+- Los enums del backend (`CategoriaResiduo`, `AreaProceso`, etc.) se muestran con etiquetas legibles definidas en `lib/etiquetas.ts`.
+- El widget del asistente IA está montado globalmente en `AppShell.tsx` y aparece en todas las pantallas autenticadas.

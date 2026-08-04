@@ -10,16 +10,16 @@ export const Route = createFileRoute("/dashboard")({
   beforeLoad: ({ context }) => requireSession(context.queryClient),
   head: () => ({
     meta: [
-      { title: "Dashboard — RESTORA Daily Operations" },
+      { title: "Panel — restora" },
       {
         name: "description",
         content:
-          "Today's operational metrics for Arequipa Central: economic loss, waste generated, reduction rate and logged operations.",
+          "Métricas operativas del día: pérdida económica, desperdicio generado, prevención y operaciones registradas.",
       },
-      { property: "og:title", content: "Dashboard — RESTORA Daily Operations" },
+      { property: "og:title", content: "Panel — restora" },
       {
         property: "og:description",
-        content: "Live restaurant waste and loss metrics in one operational overview.",
+        content: "Métricas de desperdicio y pérdida del restaurante en un solo panel.",
       },
     ],
   }),
@@ -27,10 +27,10 @@ export const Route = createFileRoute("/dashboard")({
 });
 
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  return new Date(iso).toLocaleDateString("es-PE", { month: "short", day: "numeric" });
 }
 function fmtTime(iso: string) {
-  return new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  return new Date(iso).toLocaleTimeString("es-PE", { hour: "numeric", minute: "2-digit" });
 }
 function pct(n: number | null): string {
   return n == null ? "—" : `${n.toFixed(1)}%`;
@@ -66,10 +66,10 @@ function DashboardPage() {
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-md">
         <div>
           <h2 className="font-headline-sm text-headline-sm-mobile md:font-headline-md md:text-headline-md text-on-surface">
-            Overview
+            Resumen
           </h2>
           <p className="font-body-md text-body-md text-on-surface-variant mt-1">
-            Operational metrics for {session.data?.restaurante.nombre ?? "your restaurant"}.
+            Métricas operativas de {session.data?.restaurante.nombre ?? "tu restaurante"}.
           </p>
         </div>
         <Link
@@ -77,12 +77,12 @@ function DashboardPage() {
           className="bg-primary-container text-on-primary h-[48px] px-lg rounded-lg font-label-md text-label-md font-bold flex items-center justify-center gap-2 shadow-soft hover:opacity-90 transition-opacity active:scale-95"
         >
           <span className="material-symbols-outlined">add</span>
-          Register today's data
+          Registrar el día
         </Link>
       </div>
 
       {dashboard.isError && (
-        <p className="text-sm text-red-600">Could not load dashboard data. Try refreshing.</p>
+        <p className="text-sm text-red-600">No se pudo cargar el panel. Intenta recargar.</p>
       )}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-md">
@@ -92,7 +92,7 @@ function DashboardPage() {
               trending_down
             </span>
             <span className="font-label-sm text-label-sm uppercase tracking-wider">
-              Est. Econ. Loss
+              Pérdida est.
             </span>
           </div>
           <div>
@@ -108,7 +108,7 @@ function DashboardPage() {
               delete_sweep
             </span>
             <span className="font-label-sm text-label-sm uppercase tracking-wider">
-              Waste Generated
+              Desperdicio
             </span>
           </div>
           <div>
@@ -121,7 +121,7 @@ function DashboardPage() {
         <div className="bg-surface-container-lowest rounded-xl p-md border border-outline-variant shadow-soft flex flex-col justify-between col-span-1">
           <div className="flex items-center gap-2 mb-sm text-on-surface-variant">
             <span className="material-symbols-outlined">eco</span>
-            <span className="font-label-sm text-label-sm uppercase tracking-wider">Prevention</span>
+            <span className="font-label-sm text-label-sm uppercase tracking-wider">Prevención</span>
           </div>
           <div>
             <div className="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-on-surface font-bold">
@@ -141,14 +141,14 @@ function DashboardPage() {
         <div className="bg-surface-container-lowest rounded-xl p-md border border-outline-variant shadow-soft flex flex-col justify-between col-span-1">
           <div className="flex items-center gap-2 mb-sm text-on-surface-variant">
             <span className="material-symbols-outlined">receipt_long</span>
-            <span className="font-label-sm text-label-sm uppercase tracking-wider">Operations</span>
+            <span className="font-label-sm text-label-sm uppercase tracking-wider">Operaciones</span>
           </div>
           <div>
             <div className="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-on-surface font-bold">
               {dashboard.data?.ultimasOperaciones.length ?? "—"}
             </div>
             <div className="font-label-sm text-label-sm text-on-surface-variant mt-1">
-              Recently logged
+              Registradas hace poco
             </div>
           </div>
         </div>
@@ -158,7 +158,7 @@ function DashboardPage() {
         <div className="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-soft md:col-span-2 overflow-hidden flex flex-col">
           <div className="p-md border-b border-surface-variant flex justify-between items-center bg-surface-bright">
             <h3 className="font-headline-sm text-headline-sm-mobile md:font-headline-md md:text-headline-md text-on-surface">
-              Weekly Performance (kg waste)
+              Desempeño semanal (kg de desperdicio)
             </h3>
           </div>
           <div className="p-md flex-1 min-h-[220px]">
@@ -171,7 +171,7 @@ function DashboardPage() {
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <p className="text-sm text-on-surface-variant">No trend data for this period yet.</p>
+              <p className="text-sm text-on-surface-variant">Aún no hay datos de tendencia.</p>
             )}
           </div>
         </div>
@@ -179,18 +179,18 @@ function DashboardPage() {
         <div className="bg-surface-container-lowest rounded-xl border border-outline-variant shadow-soft flex flex-col h-full">
           <div className="p-md border-b border-surface-variant flex justify-between items-center bg-surface-bright">
             <h3 className="font-headline-sm text-headline-sm-mobile md:font-headline-md md:text-headline-md text-on-surface">
-              Recent Activity
+              Actividad reciente
             </h3>
             <Link
               to="/history"
               className="font-label-sm text-label-sm text-primary hover:underline"
             >
-              View All
+              Ver todo
             </Link>
           </div>
           <div className="p-md flex-1 space-y-4 overflow-y-auto">
             {dashboard.data?.ultimasOperaciones.length === 0 && (
-              <p className="text-sm text-on-surface-variant">No operations logged yet.</p>
+              <p className="text-sm text-on-surface-variant">Aún no hay operaciones registradas.</p>
             )}
             {dashboard.data?.ultimasOperaciones.map((op) => (
               <div className="flex items-start gap-3" key={op.id}>
@@ -199,11 +199,12 @@ function DashboardPage() {
                 </div>
                 <div>
                   <div className="font-label-md text-label-md font-bold text-on-surface">
-                    {op.turno.charAt(0) + op.turno.slice(1).toLowerCase()} operation
+                    Operación ·{" "}
+                    {op.turno === "MANANA" ? "Mañana" : op.turno === "TARDE" ? "Tarde" : "Noche"}
                   </div>
                   <div className="font-body-md text-body-md text-on-surface-variant line-clamp-1">
-                    {op.totalDesperdicioKg.toFixed(1)} kg waste · S/ {op.totalVentas.toFixed(0)}{" "}
-                    sales
+                    {op.totalDesperdicioKg.toFixed(1)} kg desperdicio · S/{" "}
+                    {op.totalVentas.toFixed(0)} en ventas
                   </div>
                   <div className="font-label-sm text-label-sm text-outline mt-0.5">
                     {fmtDate(op.fecha)}, {fmtTime(op.fecha)}

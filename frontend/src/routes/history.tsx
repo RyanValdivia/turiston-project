@@ -10,10 +10,8 @@ export const Route = createFileRoute("/history")({
   beforeLoad: ({ context }) => requireSession(context.queryClient),
   head: () => ({
     meta: [
-      { title: "Restora - History" },
-      { name: "description", content: "Review past daily inputs and economic impacts." },
-      { property: "og:title", content: "Restora - History" },
-      { property: "og:description", content: "Review past daily inputs and economic impacts." },
+      { title: "restora - Historial" },
+      { name: "description", content: "Revisa los registros diarios y su impacto económico." },
     ],
   }),
   component: HistoryPage,
@@ -29,12 +27,17 @@ function useDebounced<T>(value: T, delayMs: number): T {
 }
 
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-US", {
+  return new Date(iso).toLocaleDateString("es-PE", {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
 }
+const ETIQUETA_TURNO_CORTO: Record<Turno, string> = {
+  MANANA: "Mañana",
+  TARDE: "Tarde",
+  NOCHE: "Noche",
+};
 function totals(op: RegistroOperacion) {
   const sales = op.ventas.reduce((s, v) => s + v.montoTotal, 0);
   const wasteKg = op.residuos.reduce((s, r) => s + r.cantidadKg, 0);
@@ -65,7 +68,7 @@ function RecordCard({
               {fmtDate(op.fecha)}
             </h4>
             <p className="font-label-sm text-label-sm text-on-surface-variant">
-              {op.turno.charAt(0) + op.turno.slice(1).toLowerCase()} shift
+              Turno {ETIQUETA_TURNO_CORTO[op.turno]}
               {op.observaciones ? ` · ${op.observaciones}` : ""}
             </p>
           </div>
@@ -78,13 +81,13 @@ function RecordCard({
                 : "bg-secondary-container text-on-secondary-container"
             }`}
           >
-            {missingCost ? "Missing cost" : "Reconciled"}
+            {missingCost ? "Falta costo" : "Conciliado"}
           </span>
           <button
             className="text-on-surface-variant hover:text-error transition-colors disabled:opacity-40"
             disabled={deleting}
             onClick={() => onDelete(op.id)}
-            title="Delete entry"
+            title="Eliminar registro"
             type="button"
           >
             <span className="material-symbols-outlined text-[20px]">delete</span>
@@ -93,17 +96,17 @@ function RecordCard({
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-sm pt-sm border-t border-surface-container">
         <div>
-          <p className="font-label-sm text-label-sm text-on-surface-variant mb-xs">Total Sales</p>
+          <p className="font-label-sm text-label-sm text-on-surface-variant mb-xs">Ventas</p>
           <p className="font-headline-sm text-headline-sm text-on-surface">S/ {sales.toFixed(2)}</p>
         </div>
         <div>
-          <p className="font-label-sm text-label-sm text-on-surface-variant mb-xs">Total Waste</p>
+          <p className="font-label-sm text-label-sm text-on-surface-variant mb-xs">Desperdicio</p>
           <p className="font-headline-sm text-headline-sm text-on-surface">
             {wasteKg.toFixed(1)} kg
           </p>
         </div>
         <div>
-          <p className="font-label-sm text-label-sm text-on-surface-variant mb-xs">Econ Impact</p>
+          <p className="font-label-sm text-label-sm text-on-surface-variant mb-xs">Impacto econ.</p>
           <p className="font-headline-sm text-headline-sm text-error">- S/ {impact.toFixed(2)}</p>
         </div>
       </div>
@@ -148,10 +151,10 @@ function HistoryPage() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-md">
           <div>
             <h2 className="font-headline-sm text-headline-sm-mobile md:font-headline-md md:text-headline-md text-on-surface">
-              Record History
+              Historial de registros
             </h2>
             <p className="font-body-md text-body-md text-on-surface-variant mt-xs">
-              Review past daily inputs and economic impacts.
+              Revisa los registros diarios y su impacto económico.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-sm w-full md:w-auto flex-wrap">
@@ -161,7 +164,7 @@ function HistoryPage() {
               </span>
               <input
                 className="w-full h-12 pl-10 pr-4 rounded-lg bg-surface-container-lowest border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary font-body-md text-body-md outline-none transition-all"
-                placeholder="Search records..."
+                placeholder="Buscar registros..."
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -172,10 +175,10 @@ function HistoryPage() {
               value={turno}
               onChange={(e) => setTurno(e.target.value as Turno | "")}
             >
-              <option value="">All shifts</option>
-              <option value="MANANA">Morning</option>
-              <option value="TARDE">Afternoon</option>
-              <option value="NOCHE">Night</option>
+              <option value="">Todos los turnos</option>
+              <option value="MANANA">Mañana</option>
+              <option value="TARDE">Tarde</option>
+              <option value="NOCHE">Noche</option>
             </select>
             <input
               className="h-12 px-md rounded-lg bg-surface-container-lowest border border-outline-variant font-label-md text-label-md text-on-surface outline-none"
@@ -192,12 +195,14 @@ function HistoryPage() {
           </div>
         </div>
 
-        {operaciones.isError && <p className="text-sm text-red-600">Could not load history.</p>}
+        {operaciones.isError && (
+          <p className="text-sm text-red-600">No se pudo cargar el historial.</p>
+        )}
 
         <div className="space-y-sm">
           {operaciones.data?.length === 0 && (
             <p className="text-sm text-on-surface-variant py-lg text-center">
-              No records match these filters.
+              Ningún registro coincide con estos filtros.
             </p>
           )}
           {operaciones.data?.map((op) => (
@@ -205,7 +210,8 @@ function HistoryPage() {
               deleting={deleteMutation.isPending && deleteMutation.variables === op.id}
               key={op.id}
               onDelete={(id) => {
-                if (confirm("Delete this entry? This cannot be undone.")) deleteMutation.mutate(id);
+                if (confirm("¿Eliminar este registro? Esta acción no se puede deshacer."))
+                  deleteMutation.mutate(id);
               }}
               op={op}
             />

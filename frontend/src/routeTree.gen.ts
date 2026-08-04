@@ -12,7 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AnalyticsRouteImport } from './routes/analytics'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as CatalogoRouteImport } from './routes/catalogo'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as EntregasRouteImport } from './routes/entregas'
 import { Route as HistoryRouteImport } from './routes/history'
 import { Route as PredictRouteImport } from './routes/predict'
 import { Route as ProfileRouteImport } from './routes/profile'
@@ -34,9 +36,19 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CatalogoRoute = CatalogoRouteImport.update({
+  id: '/catalogo',
+  path: '/catalogo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DashboardRoute = DashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EntregasRoute = EntregasRouteImport.update({
+  id: '/entregas',
+  path: '/entregas',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HistoryRoute = HistoryRouteImport.update({
@@ -69,7 +81,9 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
+  '/catalogo': typeof CatalogoRoute
   '/dashboard': typeof DashboardRoute
+  '/entregas': typeof EntregasRoute
   '/history': typeof HistoryRoute
   '/predict': typeof PredictRoute
   '/profile': typeof ProfileRoute
@@ -80,7 +94,9 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
+  '/catalogo': typeof CatalogoRoute
   '/dashboard': typeof DashboardRoute
+  '/entregas': typeof EntregasRoute
   '/history': typeof HistoryRoute
   '/predict': typeof PredictRoute
   '/profile': typeof ProfileRoute
@@ -92,7 +108,9 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
   '/auth': typeof AuthRoute
+  '/catalogo': typeof CatalogoRoute
   '/dashboard': typeof DashboardRoute
+  '/entregas': typeof EntregasRoute
   '/history': typeof HistoryRoute
   '/predict': typeof PredictRoute
   '/profile': typeof ProfileRoute
@@ -105,7 +123,9 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/auth'
+    | '/catalogo'
     | '/dashboard'
+    | '/entregas'
     | '/history'
     | '/predict'
     | '/profile'
@@ -116,7 +136,9 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/auth'
+    | '/catalogo'
     | '/dashboard'
+    | '/entregas'
     | '/history'
     | '/predict'
     | '/profile'
@@ -127,7 +149,9 @@ export interface FileRouteTypes {
     | '/'
     | '/analytics'
     | '/auth'
+    | '/catalogo'
     | '/dashboard'
+    | '/entregas'
     | '/history'
     | '/predict'
     | '/profile'
@@ -139,7 +163,9 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyticsRoute: typeof AnalyticsRoute
   AuthRoute: typeof AuthRoute
+  CatalogoRoute: typeof CatalogoRoute
   DashboardRoute: typeof DashboardRoute
+  EntregasRoute: typeof EntregasRoute
   HistoryRoute: typeof HistoryRoute
   PredictRoute: typeof PredictRoute
   ProfileRoute: typeof ProfileRoute
@@ -170,11 +196,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/catalogo': {
+      id: '/catalogo'
+      path: '/catalogo'
+      fullPath: '/catalogo'
+      preLoaderRoute: typeof CatalogoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/dashboard': {
       id: '/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
       preLoaderRoute: typeof DashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/entregas': {
+      id: '/entregas'
+      path: '/entregas'
+      fullPath: '/entregas'
+      preLoaderRoute: typeof EntregasRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/history': {
@@ -219,7 +259,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyticsRoute: AnalyticsRoute,
   AuthRoute: AuthRoute,
+  CatalogoRoute: CatalogoRoute,
   DashboardRoute: DashboardRoute,
+  EntregasRoute: EntregasRoute,
   HistoryRoute: HistoryRoute,
   PredictRoute: PredictRoute,
   ProfileRoute: ProfileRoute,

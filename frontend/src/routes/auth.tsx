@@ -6,16 +6,12 @@ import { login, register, forgotPassword, resetPassword, ApiError } from "@/lib/
 export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
-      { title: "RESTORA - Login / Register" },
+      { title: "restora - Ingresar / Registrarse" },
       {
         name: "description",
-        content: "Sign in, register, or reset your password for RESTORA restaurant operations.",
+        content: "Inicia sesión, regístrate o recupera tu contraseña en restora.",
       },
-      { property: "og:title", content: "RESTORA - Login / Register" },
-      {
-        property: "og:description",
-        content: "Sign in, register, or reset your password for RESTORA restaurant operations.",
-      },
+      { property: "og:title", content: "restora - Ingresar / Registrarse" },
     ],
   }),
   component: AuthPage,
@@ -25,7 +21,7 @@ type View = "login" | "register" | "recovery";
 
 function errorMessage(err: unknown): string {
   if (err instanceof ApiError) return err.message;
-  return "Something went wrong. Try again.";
+  return "Algo salió mal. Inténtalo de nuevo.";
 }
 
 function AuthPage() {
@@ -106,18 +102,16 @@ function AuthPage() {
     <div className="bg-surface text-on-surface min-h-screen flex flex-col font-body-md antialiased overflow-x-hidden selection:bg-primary-container selection:text-white">
       <main className="flex-grow flex flex-col pt-safe pb-safe px-margin-mobile relative z-10 w-full max-w-[480px] mx-auto min-h-screen justify-center">
         <header className="w-full flex flex-col items-center justify-center mb-xl mt-lg">
-          <div className="w-[120px] h-[120px] mb-lg rounded-xl overflow-hidden shadow-[0_8px_24px_rgba(31,27,23,0.08)] bg-white p-2">
-            <img
-              alt="RESTORA Logo"
-              className="w-full h-full object-contain rounded-lg"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuAHC6cTHpk7mg5FmQdPzG-oyIoGvLeV1DoT7oFRBe8YhTe1WYJSnGfDUmqhtKdz-X-9nXto-s0640hmkvwvm5IrNLJ-XxTGYE2W_VxDMxW7m6u7sbKuJHqddhvgRFTpi5egycUO4vZer6GwWBKxS_4ep14eGChjZ8Qee-8oDy2QOKTJMRLEKyiQDTvGvOH947CamaT38NRFRlELrfpaKfhvey21Cvg1b_FC0H15gjpySdqZskjLTapSzA"
-            />
+          <div className="w-[96px] h-[96px] mb-lg rounded-2xl shadow-[0_8px_24px_rgba(31,27,23,0.08)] bg-primary-container text-on-primary-container flex items-center justify-center">
+            <span className="material-symbols-outlined" data-weight="fill" style={{ fontSize: 48 }}>
+              eco
+            </span>
           </div>
           <h1 className="font-display-lg-mobile text-display-lg-mobile md:font-display-lg md:text-display-lg text-primary tracking-tight text-center">
-            RESTORA
+            restora
           </h1>
           <p className="font-body-md text-body-md text-on-surface-variant text-center mt-sm max-w-[280px]">
-            Intelligent operations for modern Arequipa restaurants.
+            Operación inteligente para restaurantes turísticos de Arequipa.
           </p>
         </header>
 
@@ -126,10 +120,10 @@ function AuthPage() {
           <div className={panelClass("login")}>
             <div className="mb-lg">
               <h2 className="font-headline-md text-headline-md text-on-surface mb-xs">
-                Welcome Back
+                Bienvenido de nuevo
               </h2>
               <p className="font-body-md text-body-md text-on-surface-variant">
-                Sign in to manage your restaurant.
+                Inicia sesión para gestionar tu restaurante.
               </p>
             </div>
             <form
@@ -144,7 +138,7 @@ function AuthPage() {
                   className="font-label-md text-label-md text-on-surface-variant"
                   htmlFor="login-email"
                 >
-                  Email Address
+                  Correo electrónico
                 </label>
                 <div className="relative flex items-center h-[48px] bg-white rounded-lg border border-outline-variant input-focus-ring overflow-hidden">
                   <span className="material-symbols-outlined text-on-surface-variant pl-md pr-sm">
@@ -166,7 +160,7 @@ function AuthPage() {
                   className="font-label-md text-label-md text-on-surface-variant"
                   htmlFor="login-password"
                 >
-                  Password
+                  Contraseña
                 </label>
                 <div className="relative flex items-center h-[48px] bg-white rounded-lg border border-outline-variant input-focus-ring overflow-hidden">
                   <span className="material-symbols-outlined text-on-surface-variant pl-md pr-sm">
@@ -198,7 +192,7 @@ function AuthPage() {
                   onClick={() => switchForm("recovery")}
                   type="button"
                 >
-                  Forgot password?
+                  ¿Olvidaste tu contraseña?
                 </button>
               </div>
               {loginMutation.isError && (
@@ -209,19 +203,19 @@ function AuthPage() {
                 disabled={loginMutation.isPending}
                 type="submit"
               >
-                <span>{loginMutation.isPending ? "Signing in…" : "Log In"}</span>
+                <span>{loginMutation.isPending ? "Ingresando…" : "Iniciar sesión"}</span>
                 <span className="material-symbols-outlined text-[20px]">arrow_forward</span>
               </button>
             </form>
             <div className="mt-lg text-center pt-md border-t border-outline-variant/30">
               <p className="font-body-md text-body-md text-on-surface-variant">
-                Don't have an account?
+                ¿No tienes una cuenta?
                 <button
                   className="font-headline-sm text-headline-sm text-primary hover:text-primary-container ml-xs transition-colors"
                   onClick={() => switchForm("register")}
                   type="button"
                 >
-                  Register here
+                  Regístrate aquí
                 </button>
               </p>
             </div>
@@ -239,7 +233,7 @@ function AuthPage() {
               </button>
               <div>
                 <h2 className="font-headline-md text-headline-md text-on-surface">
-                  Create Account
+                  Crear cuenta
                 </h2>
               </div>
             </div>
@@ -255,7 +249,7 @@ function AuthPage() {
                   className="font-label-md text-label-md text-on-surface-variant"
                   htmlFor="reg-restaurant"
                 >
-                  Restaurant Name
+                  Nombre del restaurante
                 </label>
                 <div className="relative flex items-center h-[48px] bg-white rounded-lg border border-outline-variant input-focus-ring overflow-hidden">
                   <span className="material-symbols-outlined text-on-surface-variant pl-md pr-sm">
@@ -279,7 +273,7 @@ function AuthPage() {
                   className="font-label-md text-label-md text-on-surface-variant"
                   htmlFor="reg-admin"
                 >
-                  Administrator Name
+                  Nombre del administrador
                 </label>
                 <div className="relative flex items-center h-[48px] bg-white rounded-lg border border-outline-variant input-focus-ring overflow-hidden">
                   <span className="material-symbols-outlined text-on-surface-variant pl-md pr-sm">
@@ -288,7 +282,7 @@ function AuthPage() {
                   <input
                     className="w-full h-full bg-transparent border-none outline-none font-body-md text-on-surface placeholder:text-outline/60 pr-md"
                     id="reg-admin"
-                    placeholder="Full Name"
+                    placeholder="Nombre completo"
                     required
                     type="text"
                     value={registerForm.nombreUsuario}
@@ -303,7 +297,7 @@ function AuthPage() {
                   className="font-label-md text-label-md text-on-surface-variant"
                   htmlFor="reg-email"
                 >
-                  Email Address
+                  Correo electrónico
                 </label>
                 <div className="relative flex items-center h-[48px] bg-white rounded-lg border border-outline-variant input-focus-ring overflow-hidden">
                   <span className="material-symbols-outlined text-on-surface-variant pl-md pr-sm">
@@ -325,7 +319,7 @@ function AuthPage() {
                   className="font-label-md text-label-md text-on-surface-variant"
                   htmlFor="reg-password"
                 >
-                  Password
+                  Contraseña
                 </label>
                 <div className="relative flex items-center h-[48px] bg-white rounded-lg border border-outline-variant input-focus-ring overflow-hidden">
                   <span className="material-symbols-outlined text-on-surface-variant pl-md pr-sm">
@@ -334,7 +328,7 @@ function AuthPage() {
                   <input
                     className="w-full h-full bg-transparent border-none outline-none font-body-md text-on-surface placeholder:text-outline/60 pr-md"
                     id="reg-password"
-                    placeholder="Min. 8 characters"
+                    placeholder="Mín. 8 caracteres"
                     required
                     minLength={8}
                     type={regPwVisible ? "text" : "password"}
@@ -353,13 +347,13 @@ function AuthPage() {
                 </div>
               </div>
               <p className="font-label-sm text-label-sm text-on-surface-variant text-center my-xs">
-                By registering, you agree to our{" "}
+                Al registrarte, aceptas nuestros{" "}
                 <a className="text-primary hover:underline" href="#">
-                  Terms
+                  Términos
                 </a>{" "}
-                &amp;{" "}
+                y{" "}
                 <a className="text-primary hover:underline" href="#">
-                  Privacy Policy
+                  Política de privacidad
                 </a>
                 .
               </p>
@@ -371,7 +365,7 @@ function AuthPage() {
                 disabled={registerMutation.isPending}
                 type="submit"
               >
-                <span>{registerMutation.isPending ? "Creating…" : "Create Account"}</span>
+                <span>{registerMutation.isPending ? "Creando…" : "Crear cuenta"}</span>
               </button>
             </form>
           </div>
@@ -388,7 +382,7 @@ function AuthPage() {
               </button>
               <div>
                 <h2 className="font-headline-md text-headline-md text-on-surface">
-                  Reset Password
+                  Recuperar contraseña
                 </h2>
               </div>
             </div>
@@ -396,8 +390,7 @@ function AuthPage() {
             {recoveryStep === "request" && (
               <>
                 <p className="font-body-md text-body-md text-on-surface-variant mb-lg">
-                  Enter the email address associated with your account and we'll get you a reset
-                  code.
+                  Ingresa el correo asociado a tu cuenta y te generaremos un código de recuperación.
                 </p>
                 <form
                   className="flex flex-col gap-md"
@@ -436,7 +429,7 @@ function AuthPage() {
                     disabled={forgotMutation.isPending}
                     type="submit"
                   >
-                    <span>{forgotMutation.isPending ? "Sending…" : "Send Reset Code"}</span>
+                    <span>{forgotMutation.isPending ? "Enviando…" : "Enviar código"}</span>
                   </button>
                 </form>
               </>
@@ -449,11 +442,11 @@ function AuthPage() {
                     <span className="material-symbols-outlined">check_circle</span>
                   </div>
                   <h3 className="font-headline-sm text-headline-sm text-on-surface mb-xs">
-                    Code Ready
+                    Código listo
                   </h3>
                   <p className="font-body-md text-body-md text-on-surface-variant">
-                    No email service is configured for this demo — enter your new password below
-                    (reset code pre-filled).
+                    Esta demo no tiene servicio de correo — ingresa tu nueva contraseña abajo (el
+                    código ya está precargado).
                   </p>
                 </div>
                 <form
@@ -468,7 +461,7 @@ function AuthPage() {
                       className="font-label-md text-label-md text-on-surface-variant"
                       htmlFor="rec-token"
                     >
-                      Reset Code
+                      Código de recuperación
                     </label>
                     <div className="relative flex items-center h-[48px] bg-white rounded-lg border border-outline-variant input-focus-ring overflow-hidden">
                       <input
@@ -486,7 +479,7 @@ function AuthPage() {
                       className="font-label-md text-label-md text-on-surface-variant"
                       htmlFor="rec-new-password"
                     >
-                      New Password
+                      Nueva contraseña
                     </label>
                     <div className="relative flex items-center h-[48px] bg-white rounded-lg border border-outline-variant input-focus-ring overflow-hidden">
                       <span className="material-symbols-outlined text-on-surface-variant pl-md pr-sm">
@@ -495,7 +488,7 @@ function AuthPage() {
                       <input
                         className="w-full h-full bg-transparent border-none outline-none font-body-md text-on-surface placeholder:text-outline/60 pr-md"
                         id="rec-new-password"
-                        placeholder="Min. 8 characters"
+                        placeholder="Mín. 8 caracteres"
                         required
                         minLength={8}
                         type="password"
@@ -512,7 +505,7 @@ function AuthPage() {
                     disabled={resetMutation.isPending}
                     type="submit"
                   >
-                    <span>{resetMutation.isPending ? "Saving…" : "Set New Password"}</span>
+                    <span>{resetMutation.isPending ? "Guardando…" : "Guardar contraseña"}</span>
                   </button>
                 </form>
               </>
